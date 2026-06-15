@@ -1,0 +1,9 @@
+name: avr8_dart
+description: A Dart port of the avr8js AVR emulator.
+version: 1.0.0
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dev_dependencies:
+  test: ^1.24.0
+  lints: ^3.0.0
