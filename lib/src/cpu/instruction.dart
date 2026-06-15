@@ -41,12 +41,12 @@ void avrInstruction(CPU cpu) {
     final int R = sum & 255;
     cpu.data[(opcode & 0x1f0) >> 4] = R;
     int sreg = cpu.data[95] & 0xc0;
-    sreg |= ((R) != 0) != 0 ? 0 : 2;
-    sreg |= ((128 & R) != 0) != 0 ? 4 : 0;
-    sreg |= (((R ^ r) & (d ^ R) & 128) != 0) != 0 ? 8 : 0;
+    sreg |= ((R) != 0) ? 0 : 2;
+    sreg |= ((128 & R) != 0) ? 4 : 0;
+    sreg |= (((R ^ r) & (d ^ R) & 128) != 0) ? 8 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= ((sum & 256) != 0) != 0 ? 1 : 0;
-    sreg |= ((1 & ((d & r) | (r & ~R) | (~R & d))) != 0) != 0 ? 0x20 : 0;
+    sreg |= ((sum & 256) != 0) ? 1 : 0;
+    sreg |= ((1 & ((d & r) | (r & ~R) | (~R & d))) != 0) ? 0x20 : 0;
     cpu.data[95] = sreg;
   } else if ((opcode & 0xfc00) == 0xc00) {
     /* ADD, 0000 11rd dddd rrrr */
@@ -55,12 +55,12 @@ void avrInstruction(CPU cpu) {
     final int R = (d + r) & 255;
     cpu.data[(opcode & 0x1f0) >> 4] = R;
     int sreg = cpu.data[95] & 0xc0;
-    sreg |= ((R) != 0) != 0 ? 0 : 2;
-    sreg |= ((128 & R) != 0) != 0 ? 4 : 0;
-    sreg |= (((R ^ r) & (R ^ d) & 128) != 0) != 0 ? 8 : 0;
+    sreg |= ((R) != 0) ? 0 : 2;
+    sreg |= ((128 & R) != 0) ? 4 : 0;
+    sreg |= (((R ^ r) & (R ^ d) & 128) != 0) ? 8 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= (((d + r) & 256) != 0) != 0 ? 1 : 0;
-    sreg |= ((1 & ((d & r) | (r & ~R) | (~R & d))) != 0) != 0 ? 0x20 : 0;
+    sreg |= (((d + r) & 256) != 0) ? 1 : 0;
+    sreg |= ((1 & ((d & r) | (r & ~R) | (~R & d))) != 0) ? 0x20 : 0;
     cpu.data[95] = sreg;
   } else if ((opcode & 0xff00) == 0x9600) {
     /* ADIW, 1001 0110 KKdd KKKK */
@@ -69,11 +69,11 @@ void avrInstruction(CPU cpu) {
     final int R = (value + ((opcode & 0xf) | ((opcode & 0xc0) >> 2))) & 0xffff;
     cpu.dataView.setUint16(addr, R, Endian.little);
     int sreg = cpu.data[95] & 0xe0;
-    sreg |= ((R) != 0) != 0 ? 0 : 2;
-    sreg |= ((0x8000 & R) != 0) != 0 ? 4 : 0;
-    sreg |= ((~value & R & 0x8000) != 0) != 0 ? 8 : 0;
+    sreg |= ((R) != 0) ? 0 : 2;
+    sreg |= ((0x8000 & R) != 0) ? 4 : 0;
+    sreg |= ((~value & R & 0x8000) != 0) ? 8 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= ((~R & value & 0x8000) != 0) != 0 ? 1 : 0;
+    sreg |= ((~R & value & 0x8000) != 0) ? 1 : 0;
     cpu.data[95] = sreg;
     cpu.cycles++;
   } else if ((opcode & 0xfc00) == 0x2000) {
@@ -81,8 +81,8 @@ void avrInstruction(CPU cpu) {
     final int R = cpu.data[(opcode & 0x1f0) >> 4] & cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
     cpu.data[(opcode & 0x1f0) >> 4] = R;
     int sreg = cpu.data[95] & 0xe1;
-    sreg |= ((R) != 0) != 0 ? 0 : 2;
-    sreg |= ((128 & R) != 0) != 0 ? 4 : 0;
+    sreg |= ((R) != 0) ? 0 : 2;
+    sreg |= ((128 & R) != 0) ? 4 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
     cpu.data[95] = sreg;
   } else if ((opcode & 0xf000) == 0x7000) {
@@ -90,8 +90,8 @@ void avrInstruction(CPU cpu) {
     final int R = cpu.data[((opcode & 0xf0) >> 4) + 16] & ((opcode & 0xf) | ((opcode & 0xf00) >> 4));
     cpu.data[((opcode & 0xf0) >> 4) + 16] = R;
     int sreg = cpu.data[95] & 0xe1;
-    sreg |= ((R) != 0) != 0 ? 0 : 2;
-    sreg |= ((128 & R) != 0) != 0 ? 4 : 0;
+    sreg |= ((R) != 0) ? 0 : 2;
+    sreg |= ((128 & R) != 0) ? 4 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
     cpu.data[95] = sreg;
   } else if ((opcode & 0xfe0f) == 0x9405) {
@@ -100,8 +100,8 @@ void avrInstruction(CPU cpu) {
     final int R = (value >>> 1) | (128 & value);
     cpu.data[(opcode & 0x1f0) >> 4] = R;
     int sreg = cpu.data[95] & 0xe0;
-    sreg |= ((R) != 0) != 0 ? 0 : 2;
-    sreg |= ((128 & R) != 0) != 0 ? 4 : 0;
+    sreg |= ((R) != 0) ? 0 : 2;
+    sreg |= ((128 & R) != 0) ? 4 : 0;
     sreg |= value & 1;
     sreg |= (((sreg >> 2) & 1) ^ (sreg & 1)) != 0 ? 8 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
@@ -161,8 +161,8 @@ void avrInstruction(CPU cpu) {
     final int R = (255 - cpu.data[d]).toInt();
     cpu.data[d] = R;
     int sreg = (cpu.data[95] & 0xe1) | 1;
-    sreg |= ((R) != 0) != 0 ? 0 : 2;
-    sreg |= ((128 & R) != 0) != 0 ? 4 : 0;
+    sreg |= ((R) != 0) ? 0 : 2;
+    sreg |= ((128 & R) != 0) ? 4 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
     cpu.data[95] = sreg;
   } else if ((opcode & 0xfc00) == 0x1400) {
@@ -171,12 +171,12 @@ void avrInstruction(CPU cpu) {
     final int val2 = cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
     final int R = val1 - val2;
     int sreg = cpu.data[95] & 0xc0;
-    sreg |= ((R) != 0) != 0 ? 0 : 2;
-    sreg |= ((128 & R) != 0) != 0 ? 4 : 0;
+    sreg |= ((R) != 0) ? 0 : 2;
+    sreg |= ((128 & R) != 0) ? 4 : 0;
     sreg |= (0 != ((val1 ^ val2) & (val1 ^ R) & 128)) != 0 ? 8 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= (val2 > val1) != 0 ? 1 : 0;
-    sreg |= ((1 & ((~val1 & val2) | (val2 & R) | (R & ~val1))) != 0) != 0 ? 0x20 : 0;
+    sreg |= (val2 > val1) ? 1 : 0;
+    sreg |= ((1 & ((~val1 & val2) | (val2 & R) | (R & ~val1))) != 0) ? 0x20 : 0;
     cpu.data[95] = sreg;
   } else if ((opcode & 0xfc00) == 0x400) {
     /* CPC, 0000 01rd dddd rrrr */
@@ -185,10 +185,10 @@ void avrInstruction(CPU cpu) {
     int sreg = cpu.data[95];
     final int r = arg1 - arg2 - (sreg & 1);
     sreg = (sreg & 0xc0) | (r == 0 && ((sreg >> 1) & 1) != 0 ? 2 : 0) | (arg2 + (sreg & 1) > arg1 ? 1 : 0);
-    sreg |= ((128 & r) != 0) != 0 ? 4 : 0;
-    sreg |= (((arg1 ^ arg2) & (arg1 ^ r) & 128) != 0) != 0 ? 8 : 0;
+    sreg |= ((128 & r) != 0) ? 4 : 0;
+    sreg |= (((arg1 ^ arg2) & (arg1 ^ r) & 128) != 0) ? 8 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= ((1 & ((~arg1 & arg2) | (arg2 & r) | (r & ~arg1))) != 0) != 0 ? 0x20 : 0;
+    sreg |= ((1 & ((~arg1 & arg2) | (arg2 & r) | (r & ~arg1))) != 0) ? 0x20 : 0;
     cpu.data[95] = sreg;
   } else if ((opcode & 0xf000) == 0x3000) {
     /* CPI, 0011 KKKK dddd KKKK */
@@ -196,12 +196,12 @@ void avrInstruction(CPU cpu) {
     final int arg2 = (opcode & 0xf) | ((opcode & 0xf00) >> 4);
     final int r = arg1 - arg2;
     int sreg = cpu.data[95] & 0xc0;
-    sreg |= ((r) != 0) != 0 ? 0 : 2;
-    sreg |= ((128 & r) != 0) != 0 ? 4 : 0;
-    sreg |= (((arg1 ^ arg2) & (arg1 ^ r) & 128) != 0) != 0 ? 8 : 0;
+    sreg |= ((r) != 0) ? 0 : 2;
+    sreg |= ((128 & r) != 0) ? 4 : 0;
+    sreg |= (((arg1 ^ arg2) & (arg1 ^ r) & 128) != 0) ? 8 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= (arg2 > arg1) != 0 ? 1 : 0;
-    sreg |= ((1 & ((~arg1 & arg2) | (arg2 & r) | (r & ~arg1))) != 0) != 0 ? 0x20 : 0;
+    sreg |= (arg2 > arg1) ? 1 : 0;
+    sreg |= ((1 & ((~arg1 & arg2) | (arg2 & r) | (r & ~arg1))) != 0) ? 0x20 : 0;
     cpu.data[95] = sreg;
   } else if ((opcode & 0xfc00) == 0x1000) {
     /* CPSE, 0001 00rd dddd rrrr */
@@ -217,8 +217,8 @@ void avrInstruction(CPU cpu) {
     final int R = value - 1;
     cpu.data[(opcode & 0x1f0) >> 4] = R;
     int sreg = cpu.data[95] & 0xe1;
-    sreg |= ((R) != 0) != 0 ? 0 : 2;
-    sreg |= ((128 & R) != 0) != 0 ? 4 : 0;
+    sreg |= ((R) != 0) ? 0 : 2;
+    sreg |= ((128 & R) != 0) ? 4 : 0;
     sreg |= (128 == value) != 0 ? 8 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
     cpu.data[95] = sreg;
@@ -264,8 +264,8 @@ void avrInstruction(CPU cpu) {
     final int R = cpu.data[(opcode & 0x1f0) >> 4] ^ cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
     cpu.data[(opcode & 0x1f0) >> 4] = R;
     int sreg = cpu.data[95] & 0xe1;
-    sreg |= ((R) != 0) != 0 ? 0 : 2;
-    sreg |= ((128 & R) != 0) != 0 ? 4 : 0;
+    sreg |= ((R) != 0) ? 0 : 2;
+    sreg |= ((128 & R) != 0) ? 4 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
     cpu.data[95] = sreg;
   } else if ((opcode & 0xff88) == 0x308) {
@@ -319,9 +319,9 @@ void avrInstruction(CPU cpu) {
     final int r = (d + 1) & 255;
     cpu.data[(opcode & 0x1f0) >> 4] = r;
     int sreg = cpu.data[95] & 0xe1;
-    sreg |= ((r) != 0) != 0 ? 0 : 2;
-    sreg |= ((128 & r) != 0) != 0 ? 4 : 0;
-    sreg |= (127 == d) != 0 ? 8 : 0;
+    sreg |= ((r) != 0) ? 0 : 2;
+    sreg |= ((128 & r) != 0) ? 4 : 0;
+    sreg |= (127 == d) ? 8 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
     cpu.data[95] = sreg;
   } else if ((opcode & 0xfe0e) == 0x940c) {
@@ -445,7 +445,7 @@ void avrInstruction(CPU cpu) {
     final int R = value >>> 1;
     cpu.data[(opcode & 0x1f0) >> 4] = R;
     int sreg = cpu.data[95] & 0xe0;
-    sreg |= ((R) != 0) != 0 ? 0 : 2;
+    sreg |= ((R) != 0) ? 0 : 2;
     sreg |= value & 1;
     sreg |= (((sreg >> 2) & 1) ^ (sreg & 1)) != 0 ? 8 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
@@ -485,12 +485,12 @@ void avrInstruction(CPU cpu) {
     final int R = 0 - value;
     cpu.data[d] = R;
     int sreg = cpu.data[95] & 0xc0;
-    sreg |= ((R) != 0) != 0 ? 0 : 2;
-    sreg |= ((128 & R) != 0) != 0 ? 4 : 0;
-    sreg |= (128 == R) != 0 ? 8 : 0;
+    sreg |= ((R) != 0) ? 0 : 2;
+    sreg |= ((128 & R) != 0) ? 4 : 0;
+    sreg |= (128 == R) ? 8 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= ((R) != 0) != 0 ? 1 : 0;
-    sreg |= ((1 & (R | value)) != 0) != 0 ? 0x20 : 0;
+    sreg |= ((R) != 0) ? 1 : 0;
+    sreg |= ((1 & (R | value)) != 0) ? 0x20 : 0;
     cpu.data[95] = sreg;
   } else if (opcode == 0) {
     /* NOP, 0000 0000 0000 0000 */
@@ -500,8 +500,8 @@ void avrInstruction(CPU cpu) {
     final int R = cpu.data[(opcode & 0x1f0) >> 4] | cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
     cpu.data[(opcode & 0x1f0) >> 4] = R;
     int sreg = cpu.data[95] & 0xe1;
-    sreg |= ((R) != 0) != 0 ? 0 : 2;
-    sreg |= ((128 & R) != 0) != 0 ? 4 : 0;
+    sreg |= ((R) != 0) ? 0 : 2;
+    sreg |= ((128 & R) != 0) ? 4 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
     cpu.data[95] = sreg;
   } else if ((opcode & 0xf000) == 0x6000) {
@@ -509,8 +509,8 @@ void avrInstruction(CPU cpu) {
     final int R = cpu.data[((opcode & 0xf0) >> 4) + 16] | ((opcode & 0xf) | ((opcode & 0xf00) >> 4));
     cpu.data[((opcode & 0xf0) >> 4) + 16] = R;
     int sreg = cpu.data[95] & 0xe1;
-    sreg |= ((R) != 0) != 0 ? 0 : 2;
-    sreg |= ((128 & R) != 0) != 0 ? 4 : 0;
+    sreg |= ((R) != 0) ? 0 : 2;
+    sreg |= ((128 & R) != 0) ? 4 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
     cpu.data[95] = sreg;
   } else if ((opcode & 0xf800) == 0xb800) {
@@ -573,9 +573,9 @@ void avrInstruction(CPU cpu) {
     final int r = (d >>> 1) | ((cpu.data[95] & 1) << 7);
     cpu.data[(opcode & 0x1f0) >> 4] = r;
     int sreg = cpu.data[95] & 0xe0;
-    sreg |= ((r) != 0) != 0 ? 0 : 2;
-    sreg |= ((128 & r) != 0) != 0 ? 4 : 0;
-    sreg |= ((1 & d) != 0) != 0 ? 1 : 0;
+    sreg |= ((r) != 0) ? 0 : 2;
+    sreg |= ((128 & r) != 0) ? 4 : 0;
+    sreg |= ((1 & d) != 0) ? 1 : 0;
     sreg |= (((sreg >> 2) & 1) ^ (sreg & 1)) != 0 ? 8 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
     cpu.data[95] = sreg;
@@ -587,10 +587,10 @@ void avrInstruction(CPU cpu) {
     final int R = val1 - val2 - (sreg & 1);
     cpu.data[(opcode & 0x1f0) >> 4] = R;
     sreg = (sreg & 0xc0) | (R == 0 && ((sreg >> 1) & 1) != 0 ? 2 : 0) | (val2 + (sreg & 1) > val1 ? 1 : 0);
-    sreg |= ((128 & R) != 0) != 0 ? 4 : 0;
-    sreg |= (((val1 ^ val2) & (val1 ^ R) & 128) != 0) != 0 ? 8 : 0;
+    sreg |= ((128 & R) != 0) ? 4 : 0;
+    sreg |= (((val1 ^ val2) & (val1 ^ R) & 128) != 0) ? 8 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= ((1 & ((~val1 & val2) | (val2 & R) | (R & ~val1))) != 0) != 0 ? 0x20 : 0;
+    sreg |= ((1 & ((~val1 & val2) | (val2 & R) | (R & ~val1))) != 0) ? 0x20 : 0;
     cpu.data[95] = sreg;
   } else if ((opcode & 0xf000) == 0x4000) {
     /* SBCI, 0100 KKKK dddd KKKK */
@@ -600,10 +600,10 @@ void avrInstruction(CPU cpu) {
     final int R = val1 - val2 - (sreg & 1);
     cpu.data[((opcode & 0xf0) >> 4) + 16] = R;
     sreg = (sreg & 0xc0) | (R == 0 && ((sreg >> 1) & 1) != 0 ? 2 : 0) | (val2 + (sreg & 1) > val1 ? 1 : 0);
-    sreg |= ((128 & R) != 0) != 0 ? 4 : 0;
-    sreg |= (((val1 ^ val2) & (val1 ^ R) & 128) != 0) != 0 ? 8 : 0;
+    sreg |= ((128 & R) != 0) ? 4 : 0;
+    sreg |= (((val1 ^ val2) & (val1 ^ R) & 128) != 0) ? 8 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= ((1 & ((~val1 & val2) | (val2 & R) | (R & ~val1))) != 0) != 0 ? 0x20 : 0;
+    sreg |= ((1 & ((~val1 & val2) | (val2 & R) | (R & ~val1))) != 0) ? 0x20 : 0;
     cpu.data[95] = sreg;
   } else if ((opcode & 0xff00) == 0x9a00) {
     /* SBI, 1001 1010 AAAA Abbb */
@@ -637,12 +637,12 @@ void avrInstruction(CPU cpu) {
     final int R = a - l;
     cpu.dataView.setUint16(i, R, Endian.little);
     int sreg = cpu.data[95] & 0xc0;
-    sreg |= ((R) != 0) != 0 ? 0 : 2;
-    sreg |= ((0x8000 & R) != 0) != 0 ? 4 : 0;
-    sreg |= ((a & ~R & 0x8000) != 0) != 0 ? 8 : 0;
+    sreg |= ((R) != 0) ? 0 : 2;
+    sreg |= ((0x8000 & R) != 0) ? 4 : 0;
+    sreg |= ((a & ~R & 0x8000) != 0) ? 8 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= (l > a) != 0 ? 1 : 0;
-    sreg |= ((1 & ((~a & l) | (l & R) | (R & ~a))) != 0) != 0 ? 0x20 : 0;
+    sreg |= (l > a) ? 1 : 0;
+    sreg |= ((1 & ((~a & l) | (l & R) | (R & ~a))) != 0) ? 0x20 : 0;
     cpu.data[95] = sreg;
     cpu.cycles++;
   } else if ((opcode & 0xfe08) == 0xfc00) {
@@ -759,12 +759,12 @@ void avrInstruction(CPU cpu) {
 
     cpu.data[(opcode & 0x1f0) >> 4] = R;
     int sreg = cpu.data[95] & 0xc0;
-    sreg |= ((R) != 0) != 0 ? 0 : 2;
-    sreg |= ((128 & R) != 0) != 0 ? 4 : 0;
-    sreg |= (((val1 ^ val2) & (val1 ^ R) & 128) != 0) != 0 ? 8 : 0;
+    sreg |= ((R) != 0) ? 0 : 2;
+    sreg |= ((128 & R) != 0) ? 4 : 0;
+    sreg |= (((val1 ^ val2) & (val1 ^ R) & 128) != 0) ? 8 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= (val2 > val1) != 0 ? 1 : 0;
-    sreg |= ((1 & ((~val1 & val2) | (val2 & R) | (R & ~val1))) != 0) != 0 ? 0x20 : 0;
+    sreg |= (val2 > val1) ? 1 : 0;
+    sreg |= ((1 & ((~val1 & val2) | (val2 & R) | (R & ~val1))) != 0) ? 0x20 : 0;
     cpu.data[95] = sreg;
   } else if ((opcode & 0xf000) == 0x5000) {
     /* SUBI, 0101 KKKK dddd KKKK */
@@ -773,12 +773,12 @@ void avrInstruction(CPU cpu) {
     final int R = val1 - val2;
     cpu.data[((opcode & 0xf0) >> 4) + 16] = R;
     int sreg = cpu.data[95] & 0xc0;
-    sreg |= ((R) != 0) != 0 ? 0 : 2;
-    sreg |= ((128 & R) != 0) != 0 ? 4 : 0;
-    sreg |= (((val1 ^ val2) & (val1 ^ R) & 128) != 0) != 0 ? 8 : 0;
+    sreg |= ((R) != 0) ? 0 : 2;
+    sreg |= ((128 & R) != 0) ? 4 : 0;
+    sreg |= (((val1 ^ val2) & (val1 ^ R) & 128) != 0) ? 8 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= (val2 > val1) != 0 ? 1 : 0;
-    sreg |= ((1 & ((~val1 & val2) | (val2 & R) | (R & ~val1))) != 0) != 0 ? 0x20 : 0;
+    sreg |= (val2 > val1) ? 1 : 0;
+    sreg |= ((1 & ((~val1 & val2) | (val2 & R) | (R & ~val1))) != 0) ? 0x20 : 0;
     cpu.data[95] = sreg;
   } else if ((opcode & 0xfe0f) == 0x9402) {
     /* SWAP, 1001 010d dddd 0010 */

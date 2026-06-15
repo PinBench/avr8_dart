@@ -16,3 +16,4 @@ export 'src/peripherals/adc.dart';
 export 'src/peripherals/eeprom.dart';
 export 'src/peripherals/watchdog.dart';
 export 'src/peripherals/usi.dart';
+export 'src/utils/assembler.dart';
