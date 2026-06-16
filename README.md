@@ -1,5 +1,10 @@
 # avr8_dart
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
+[![Coverage: 100%](https://img.shields.io/badge/Coverage-100%25-brightgreen.svg)](https://github.com/burhankhanzada/avr8_dart)
+[![Dart SDK](https://img.shields.io/badge/Dart-%3E%3D3.0.0-0175C2.svg?logo=dart)](https://dart.dev)
+[![Pub Version](https://img.shields.io/pub/v/avr8_dart)](https://pub.dev/packages/avr8_dart)
+
 A Dart library that implements the AVR 8-bit architecture, enabling you to simulate Arduino and ATmega/ATtiny microcontrollers directly in Dart and Flutter. 
 
 This is a direct, 1-to-1 port of the official [avr8js](https://github.com/wokwi/avr8js) library (created by Uri Shaked), achieving 100% test coverage and parity with the original TypeScript project.
