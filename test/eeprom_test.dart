@@ -93,7 +93,9 @@ void main() {
         expect(eepromBackend.memory[9], equals(0x05));
       });
 
-      test('should clear the EEPE bit and fire an interrupt when write has been completed', () {
+      test(
+          'should clear the EEPE bit and fire an interrupt when write has been completed',
+          () {
         final cpu = CPU(Uint16List(0x1000));
         final eepromBackend = EEPROMMemoryBackend(1024);
         AVREEPROM(cpu, eepromBackend);
@@ -116,7 +118,9 @@ void main() {
         expect(cpu.pc, equals(0x2c)); // EEPROM Ready interrupt
       });
 
-      test('should clear the fire an interrupt when there is a pending interrupt and the interrupt flag is enabled (issue #110)', () {
+      test(
+          'should clear the fire an interrupt when there is a pending interrupt and the interrupt flag is enabled (issue #110)',
+          () {
         final cpu = CPU(Uint16List(0x1000));
         final eepromBackend = EEPROMMemoryBackend(1024);
         AVREEPROM(cpu, eepromBackend);

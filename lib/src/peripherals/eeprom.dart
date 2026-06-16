@@ -98,11 +98,13 @@ class AVREEPROM {
       inverseFlag: true,
     );
 
-    cpu.writeHooks[config.EECR] = (int value, int oldValue, int addr, int mask) {
+    cpu.writeHooks[config.EECR] =
+        (int value, int oldValue, int addr, int mask) {
       final eecr = value;
       final memoryAddr = (cpu.data[config.EEARH] << 8) | cpu.data[config.EEARL];
 
-      cpu.data[config.EECR] = (cpu.data[config.EECR] & ~EECR_WRITE_MASK) | (eecr & EECR_WRITE_MASK);
+      cpu.data[config.EECR] =
+          (cpu.data[config.EECR] & ~EECR_WRITE_MASK) | (eecr & EECR_WRITE_MASK);
       cpu.updateInterruptEnable(EER, eecr);
 
       if ((eecr & EERE) != 0) {

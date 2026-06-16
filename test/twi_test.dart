@@ -27,7 +27,7 @@ const TWINT = 0x80;
 
 class MockTWIEventHandler implements TWIEventHandler {
   final AVRTWI twi;
-  
+
   MockTWIEventHandler(this.twi);
 
   int startCallCount = 0;
@@ -79,7 +79,9 @@ void main() {
       expect(twi.sclFrequency, equals(100000));
     });
 
-    test('should take the prescaler into consideration when calculating sclFrequency', () {
+    test(
+        'should take the prescaler into consideration when calculating sclFrequency',
+        () {
       final cpu = CPU(Uint16List(1024));
       final twi = AVRTWI(cpu, twiConfig, FREQ_16MHZ);
       cpu.writeData(TWBR, 0x03);
@@ -100,16 +102,17 @@ void main() {
     });
 
     group('Master mode', () {
-      test('should call the startEvent handler when TWSTA bit is written 1', () {
+      test('should call the startEvent handler when TWSTA bit is written 1',
+          () {
         final cpu = CPU(Uint16List(1024));
         final twi = AVRTWI(cpu, twiConfig, FREQ_16MHZ);
         final mockHandler = MockTWIEventHandler(twi);
         twi.eventHandler = mockHandler;
-        
+
         cpu.writeData(TWCR, TWINT | TWSTA | TWEN);
         cpu.cycles++;
         cpu.tick();
-        
+
         expect(mockHandler.startCallCount, equals(1));
         expect(mockHandler.startRepeated, isFalse);
       });
@@ -217,7 +220,7 @@ void main() {
         final cpu = CPU(asm.program);
         final twi = AVRTWI(cpu, twiConfig, FREQ_16MHZ);
         final runner = TestProgramRunner(cpu, (cpu) {});
-        
+
         bool startCalled = false;
         bool stopCalled = false;
         bool connectCalled = false;
@@ -490,7 +493,8 @@ void main() {
         expect(cpu.data[R17], equals(0x42));
       });
 
-      test('should connect successfully in case of repeated start (issue #91)', () {
+      test('should connect successfully in case of repeated start (issue #91)',
+          () {
         final cpu = CPU(Uint16List(1024));
         final twi = AVRTWI(cpu, twiConfig, FREQ_16MHZ);
         final mockHandler = MockTWIEventHandler(twi);

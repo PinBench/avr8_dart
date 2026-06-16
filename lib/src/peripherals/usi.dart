@@ -68,7 +68,8 @@ class AVRUSI {
           : oldValue & ~(1 << dataPin);
       cpu.writeHooks[PORT]!(newValue, oldValue, PORT, 0xff);
       if ((newValue & 0x80) != 0 && (cpu.data[PIN] & 0x80) == 0) {
-        cpu.data[USISR] |= USIDC; // Shout output HIGH (pulled-up), but input is LOW
+        cpu.data[USISR] |=
+            USIDC; // Shout output HIGH (pulled-up), but input is LOW
       } else {
         cpu.data[USISR] &= ~USIDC;
       }
@@ -96,7 +97,8 @@ class AVRUSI {
 
     cpu.writeHooks[USISR] = (int value, int oldValue, int addr, int mask) {
       const writeClearMask = USISIF | USIOIF | USIPF;
-      cpu.data[USISR] = (cpu.data[USISR] & writeClearMask & ~value) | (value & 0xf);
+      cpu.data[USISR] =
+          (cpu.data[USISR] & writeClearMask & ~value) | (value & 0xf);
       cpu.clearInterruptByFlag(START, value);
       cpu.clearInterruptByFlag(OVF, value);
       return true;
@@ -106,19 +108,19 @@ class AVRUSI {
       cpu.data[USICR] = value & ~(USICLK | USITC);
       cpu.updateInterruptEnable(START, value);
       cpu.updateInterruptEnable(OVF, value);
-      
+
       final clockSrc = (value & (USICS1 | USICS0)) >> 2;
       final mode = (value & (USIWM1 | USIWM0)) >> 4;
       final usiClk = (value & USICLK) != 0;
-      
+
       port.openCollector = mode >= 2 ? 1 << dataPin : 0;
       final inputValue = (cpu.data[PIN] & (1 << dataPin)) != 0 ? 1 : 0;
-      
+
       if (usiClk && clockSrc == 0) {
         shift(inputValue);
         count();
       }
-      
+
       if ((value & USITC) != 0) {
         cpu.writeHooks[PIN]!(1 << clockPin, cpu.data[PIN], PIN, 0xff);
         final newValue = (cpu.data[PIN] & (1 << clockPin)) != 0;

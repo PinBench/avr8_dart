@@ -52,20 +52,22 @@ class CPU {
   late final Uint16List data16;
   late final ByteData dataView;
   late final Uint8List progBytes;
-  
+
   final Map<int, CPUMemoryReadHook> readHooks = {};
   final Map<int, CPUMemoryHook> writeHooks = {};
-  
-  final List<AVRInterruptConfig?> pendingInterrupts = List.filled(MAX_INTERRUPTS, null);
+
+  final List<AVRInterruptConfig?> pendingInterrupts =
+      List.filled(MAX_INTERRUPTS, null);
   AVRClockEventEntry? nextClockEvent;
   final List<AVRClockEventEntry> clockEventPool = [];
-  
+
   late final bool pc22Bits;
   final Set<AVRIOPort> gpioPorts = {};
-  final List<AVRIOPort?> gpioByPort = List.filled(registerSpace, null, growable: true);
-  
+  final List<AVRIOPort?> gpioByPort =
+      List.filled(registerSpace, null, growable: true);
+
   void Function() onWatchdogReset = () {};
-  
+
   u32 pc = 0;
   int cycles = 0;
   i16 nextInterrupt = -1;
@@ -175,7 +177,8 @@ class CPU {
     }
   }
 
-  AVRClockEventCallback addClockEvent(AVRClockEventCallback callback, int cyclesArg) {
+  AVRClockEventCallback addClockEvent(
+      AVRClockEventCallback callback, int cyclesArg) {
     int actualCycles = cycles + (cyclesArg > 1 ? cyclesArg : 1);
     AVRClockEventEntry entry;
     if (clockEventPool.isNotEmpty) {
@@ -218,7 +221,7 @@ class CPU {
     if (clockEvent == null) {
       return false;
     }
-    
+
     AVRClockEventEntry? lastItem;
     while (clockEvent != null) {
       if (clockEvent.callback == callback) {

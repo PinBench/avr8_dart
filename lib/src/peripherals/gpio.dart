@@ -225,7 +225,7 @@ class AVRIOPort {
   final Map<int, ExternalClockListener?> externalClockListeners = {};
   late final List<AVRInterruptConfig?> externalInts;
   late final AVRInterruptConfig? PCINT;
-  
+
   List<GPIOListener> listeners = [];
   int pinValue = 0;
   int overrideMask = 0xff;
@@ -239,23 +239,26 @@ class AVRIOPort {
     cpu.gpioPorts.add(this);
     cpu.gpioByPort[portConfig.PORT] = this;
 
-    cpu.writeHooks[portConfig.DDR] = (int value, int oldValue, int addr, int mask) {
+    cpu.writeHooks[portConfig.DDR] =
+        (int value, int oldValue, int addr, int mask) {
       final portValue = cpu.data[portConfig.PORT];
       cpu.data[portConfig.DDR] = value;
       writeGpio(portValue, value);
       updatePinRegister(value);
       return true;
     };
-    
-    cpu.writeHooks[portConfig.PORT] = (int value, int oldValue, int addr, int mask) {
+
+    cpu.writeHooks[portConfig.PORT] =
+        (int value, int oldValue, int addr, int mask) {
       final ddrMask = cpu.data[portConfig.DDR];
       cpu.data[portConfig.PORT] = value;
       writeGpio(value, ddrMask);
       updatePinRegister(ddrMask);
       return true;
     };
-    
-    cpu.writeHooks[portConfig.PIN] = (int value, int oldValue, int addr, int mask) {
+
+    cpu.writeHooks[portConfig.PIN] =
+        (int value, int oldValue, int addr, int mask) {
       // Writing to 1 PIN toggles PORT bits
       final oldPortValue = cpu.data[portConfig.PORT];
       final ddrMask = cpu.data[portConfig.DDR];
@@ -268,18 +271,18 @@ class AVRIOPort {
 
     // External interrupts
     final externalInterrupts = portConfig.externalInterrupts;
-    externalInts = externalInterrupts.map((externalConfig) =>
-      externalConfig != null
-        ? AVRInterruptConfig(
-            address: externalConfig.interrupt,
-            flagRegister: externalConfig.EIFR,
-            flagMask: 1 << externalConfig.index,
-            enableRegister: externalConfig.EIMSK,
-            enableMask: 1 << externalConfig.index,
-          )
-        : null
-    ).toList();
-    
+    externalInts = externalInterrupts
+        .map((externalConfig) => externalConfig != null
+            ? AVRInterruptConfig(
+                address: externalConfig.interrupt,
+                flagRegister: externalConfig.EIFR,
+                flagMask: 1 << externalConfig.index,
+                enableRegister: externalConfig.EIMSK,
+                enableMask: 1 << externalConfig.index,
+              )
+            : null)
+        .toList();
+
     final eicrSet = <int>{};
     for (final item in externalInterrupts) {
       if (item != null) eicrSet.add(item.EICR);
@@ -287,7 +290,7 @@ class AVRIOPort {
     for (final EICRx in eicrSet) {
       attachInterruptHook(EICRx);
     }
-    
+
     int EIMSK = 0;
     for (final item in externalInterrupts) {
       if (item != null) {
@@ -296,7 +299,7 @@ class AVRIOPort {
       }
     }
     attachInterruptHook(EIMSK, 'mask');
-    
+
     int EIFR = 0;
     for (final item in externalInterrupts) {
       if (item != null) {
@@ -309,15 +312,15 @@ class AVRIOPort {
     // Pin change interrupts
     final pinChange = portConfig.pinChange;
     PCINT = pinChange != null
-      ? AVRInterruptConfig(
-          address: pinChange.pinChangeInterrupt,
-          flagRegister: pinChange.PCIFR,
-          flagMask: 1 << pinChange.PCIE,
-          enableRegister: pinChange.PCICR,
-          enableMask: 1 << pinChange.PCIE,
-        )
-      : null;
-      
+        ? AVRInterruptConfig(
+            address: pinChange.pinChangeInterrupt,
+            flagRegister: pinChange.PCIFR,
+            flagMask: 1 << pinChange.PCIE,
+            enableRegister: pinChange.PCICR,
+            enableMask: 1 << pinChange.PCIE,
+          )
+        : null;
+
     if (pinChange != null) {
       final PCIFR = pinChange.PCIFR;
       final PCMSK = pinChange.PCMSK;
@@ -355,8 +358,10 @@ class AVRIOPort {
     final ddr = cpu.data[portConfig.DDR];
     final port = cpu.data[portConfig.PORT];
     final bitMask = 1 << index;
-    final openState = (port & bitMask) != 0 ? PinState.InputPullUp : PinState.Input;
-    final highValue = (openCollector & bitMask) != 0 ? openState : PinState.High;
+    final openState =
+        (port & bitMask) != 0 ? PinState.InputPullUp : PinState.Input;
+    final highValue =
+        (openCollector & bitMask) != 0 ? openState : PinState.High;
     if ((ddr & bitMask) != 0) {
       return (lastValue & bitMask) != 0 ? highValue : PinState.Low;
     } else {
@@ -421,7 +426,7 @@ class AVRIOPort {
   void toggleInterrupt(int pin, bool risingEdge) {
     final externalInterrupts = portConfig.externalInterrupts;
     final pinChange = portConfig.pinChange;
-    
+
     if (pin < externalInterrupts.length) {
       final externalConfig = externalInterrupts[pin];
       final external = pin < externalInts.length ? externalInts[pin] : null;
@@ -458,7 +463,9 @@ class AVRIOPort {
       }
     }
 
-    if (pinChange != null && PCINT != null && (pinChange.mask & (1 << pin)) != 0) {
+    if (pinChange != null &&
+        PCINT != null &&
+        (pinChange.mask & (1 << pin)) != 0) {
       final PCMSK = pinChange.PCMSK;
       if ((cpu.data[PCMSK] & (1 << (pin + pinChange.offset))) != 0) {
         cpu.setInterruptFlag(PCINT!);
@@ -480,7 +487,9 @@ class AVRIOPort {
           if (external != null && registerType == 'mask') {
             cpu.updateInterruptEnable(external, value);
           }
-          if (external != null && !external.constant && registerType == 'flag') {
+          if (external != null &&
+              !external.constant &&
+              registerType == 'flag') {
             cpu.clearInterruptByFlag(external, value);
           }
         }
@@ -523,7 +532,8 @@ class AVRIOPort {
   }
 
   void writeGpio(int value, int ddr) {
-    final newValue = (((value & overrideMask) | overrideValue) & ddr) | (value & ~ddr);
+    final newValue =
+        (((value & overrideMask) | overrideValue) & ddr) | (value & ~ddr);
     final prevValue = lastValue;
     if (newValue != prevValue || ddr != lastDdr) {
       lastValue = newValue;

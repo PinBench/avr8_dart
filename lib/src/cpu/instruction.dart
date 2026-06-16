@@ -16,18 +16,16 @@
 import 'cpu.dart';
 import 'dart:typed_data';
 
-
 bool isTwoWordInstruction(int opcode) {
   return (
-    /* LDS */
-    (opcode & 0xfe0f) == 0x9000 ||
-    /* STS */
-    (opcode & 0xfe0f) == 0x9200 ||
-    /* CALL */
-    (opcode & 0xfe0e) == 0x940e ||
-    /* JMP */
-    (opcode & 0xfe0e) == 0x940c
-  );
+      /* LDS */
+      (opcode & 0xfe0f) == 0x9000 ||
+          /* STS */
+          (opcode & 0xfe0f) == 0x9200 ||
+          /* CALL */
+          (opcode & 0xfe0e) == 0x940e ||
+          /* JMP */
+          (opcode & 0xfe0e) == 0x940c);
 }
 
 void avrInstruction(CPU cpu) {
@@ -78,7 +76,8 @@ void avrInstruction(CPU cpu) {
     cpu.cycles++;
   } else if ((opcode & 0xfc00) == 0x2000) {
     /* AND, 0010 00rd dddd rrrr */
-    final int R = cpu.data[(opcode & 0x1f0) >> 4] & cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
+    final int R = cpu.data[(opcode & 0x1f0) >> 4] &
+        cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
     cpu.data[(opcode & 0x1f0) >> 4] = R;
     int sreg = cpu.data[95] & 0xe1;
     sreg |= ((R) != 0) ? 0 : 2;
@@ -87,7 +86,8 @@ void avrInstruction(CPU cpu) {
     cpu.data[95] = sreg;
   } else if ((opcode & 0xf000) == 0x7000) {
     /* ANDI, 0111 KKKK dddd KKKK */
-    final int R = cpu.data[((opcode & 0xf0) >> 4) + 16] & ((opcode & 0xf) | ((opcode & 0xf00) >> 4));
+    final int R = cpu.data[((opcode & 0xf0) >> 4) + 16] &
+        ((opcode & 0xf) | ((opcode & 0xf00) >> 4));
     cpu.data[((opcode & 0xf0) >> 4) + 16] = R;
     int sreg = cpu.data[95] & 0xe1;
     sreg |= ((R) != 0) ? 0 : 2;
@@ -117,13 +117,15 @@ void avrInstruction(CPU cpu) {
   } else if ((opcode & 0xfc00) == 0xf400) {
     /* BRBC, 1111 01kk kkkk ksss */
     if ((cpu.data[95] & (1 << (opcode & 7))) == 0) {
-      cpu.pc = cpu.pc + (((opcode & 0x1f8) >> 3) - ((opcode & 0x200) != 0 ? 0x40 : 0));
+      cpu.pc = cpu.pc +
+          (((opcode & 0x1f8) >> 3) - ((opcode & 0x200) != 0 ? 0x40 : 0));
       cpu.cycles++;
     }
   } else if ((opcode & 0xfc00) == 0xf000) {
     /* BRBS, 1111 00kk kkkk ksss */
     if ((cpu.data[95] & (1 << (opcode & 7))) != 0) {
-      cpu.pc = cpu.pc + (((opcode & 0x1f8) >> 3) - ((opcode & 0x200) != 0 ? 0x40 : 0));
+      cpu.pc = cpu.pc +
+          (((opcode & 0x1f8) >> 3) - ((opcode & 0x200) != 0 ? 0x40 : 0));
       cpu.cycles++;
     }
   } else if ((opcode & 0xff8f) == 0x9408) {
@@ -136,7 +138,9 @@ void avrInstruction(CPU cpu) {
     cpu.data[95] = (cpu.data[95] & 0xbf) | (((d >> b) & 1) != 0 ? 0x40 : 0);
   } else if ((opcode & 0xfe0e) == 0x940e) {
     /* CALL, 1001 010k kkkk 111k kkkk kkkk kkkk kkkk */
-    final int k = cpu.progMem[cpu.pc + 1] | ((opcode & 1) << 16) | ((opcode & 0x1f0) << 13);
+    final int k = cpu.progMem[cpu.pc + 1] |
+        ((opcode & 1) << 16) |
+        ((opcode & 0x1f0) << 13);
     final int ret = cpu.pc + 2;
     final int sp = cpu.dataView.getUint16(93, Endian.little);
     final bool pc22Bits = cpu.pc22Bits;
@@ -184,7 +188,9 @@ void avrInstruction(CPU cpu) {
     final int arg2 = cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
     int sreg = cpu.data[95];
     final int r = arg1 - arg2 - (sreg & 1);
-    sreg = (sreg & 0xc0) | (r == 0 && ((sreg >> 1) & 1) != 0 ? 2 : 0) | (arg2 + (sreg & 1) > arg1 ? 1 : 0);
+    sreg = (sreg & 0xc0) |
+        (r == 0 && ((sreg >> 1) & 1) != 0 ? 2 : 0) |
+        (arg2 + (sreg & 1) > arg1 ? 1 : 0);
     sreg |= ((128 & r) != 0) ? 4 : 0;
     sreg |= (((arg1 ^ arg2) & (arg1 ^ r) & 128) != 0) ? 8 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
@@ -205,7 +211,8 @@ void avrInstruction(CPU cpu) {
     cpu.data[95] = sreg;
   } else if ((opcode & 0xfc00) == 0x1000) {
     /* CPSE, 0001 00rd dddd rrrr */
-    if (cpu.data[(opcode & 0x1f0) >> 4] == cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)]) {
+    if (cpu.data[(opcode & 0x1f0) >> 4] ==
+        cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)]) {
       final int nextOpcode = cpu.progMem[cpu.pc + 1];
       final int skipSize = isTwoWordInstruction(nextOpcode) ? 2 : 1;
       cpu.pc += skipSize;
@@ -241,13 +248,14 @@ void avrInstruction(CPU cpu) {
   } else if (opcode == 0x95d8) {
     /* ELPM, 1001 0101 1101 1000 */
     final int rampz = cpu.data[0x5b];
-    cpu.data[0] = cpu.progBytes[(rampz << 16) | cpu.dataView.getUint16(30, Endian.little)];
+    cpu.data[0] = cpu
+        .progBytes[(rampz << 16) | cpu.dataView.getUint16(30, Endian.little)];
     cpu.cycles += 2;
   } else if ((opcode & 0xfe0f) == 0x9006) {
     /* ELPM(REG), 1001 000d dddd 0110 */
     final int rampz = cpu.data[0x5b];
-    cpu.data[(opcode & 0x1f0) >> 4] =
-      cpu.progBytes[(rampz << 16) | cpu.dataView.getUint16(30, Endian.little)];
+    cpu.data[(opcode & 0x1f0) >> 4] = cpu
+        .progBytes[(rampz << 16) | cpu.dataView.getUint16(30, Endian.little)];
     cpu.cycles += 2;
   } else if ((opcode & 0xfe0f) == 0x9007) {
     /* ELPM(INC), 1001 000d dddd 0111 */
@@ -261,7 +269,8 @@ void avrInstruction(CPU cpu) {
     cpu.cycles += 2;
   } else if ((opcode & 0xfc00) == 0x2400) {
     /* EOR, 0010 01rd dddd rrrr */
-    final int R = cpu.data[(opcode & 0x1f0) >> 4] ^ cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
+    final int R = cpu.data[(opcode & 0x1f0) >> 4] ^
+        cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
     cpu.data[(opcode & 0x1f0) >> 4] = R;
     int sreg = cpu.data[95] & 0xe1;
     sreg |= ((R) != 0) ? 0 : 2;
@@ -274,7 +283,9 @@ void avrInstruction(CPU cpu) {
     final int v2 = cpu.data[(opcode & 7) + 16];
     final int R = (v1 * v2) << 1;
     cpu.dataView.setUint16(0, R, Endian.little);
-    cpu.data[95] = (cpu.data[95] & 0xfc) | ((0xffff & R) != 0 ? 0 : 2) | (((v1 * v2) & 0x8000) != 0 ? 1 : 0);
+    cpu.data[95] = (cpu.data[95] & 0xfc) |
+        ((0xffff & R) != 0 ? 0 : 2) |
+        (((v1 * v2) & 0x8000) != 0 ? 1 : 0);
     cpu.cycles++;
   } else if ((opcode & 0xff88) == 0x380) {
     /* FMULS, 0000 0011 1ddd 0rrr */
@@ -282,7 +293,9 @@ void avrInstruction(CPU cpu) {
     final int v2 = cpu.dataView.getInt8((opcode & 7) + 16);
     final int R = (v1 * v2) << 1;
     cpu.dataView.setInt16(0, R, Endian.little);
-    cpu.data[95] = (cpu.data[95] & 0xfc) | ((0xffff & R) != 0 ? 0 : 2) | (((v1 * v2) & 0x8000) != 0 ? 1 : 0);
+    cpu.data[95] = (cpu.data[95] & 0xfc) |
+        ((0xffff & R) != 0 ? 0 : 2) |
+        (((v1 * v2) & 0x8000) != 0 ? 1 : 0);
     cpu.cycles++;
   } else if ((opcode & 0xff88) == 0x388) {
     /* FMULSU, 0000 0011 1ddd 1rrr */
@@ -290,7 +303,9 @@ void avrInstruction(CPU cpu) {
     final int v2 = cpu.data[(opcode & 7) + 16];
     final int R = (v1 * v2) << 1;
     cpu.dataView.setInt16(0, R, Endian.little);
-    cpu.data[95] = (cpu.data[95] & 0xfc) | ((0xffff & R) != 0 ? 2 : 0) | (((v1 * v2) & 0x8000) != 0 ? 1 : 0);
+    cpu.data[95] = (cpu.data[95] & 0xfc) |
+        ((0xffff & R) != 0 ? 2 : 0) |
+        (((v1 * v2) & 0x8000) != 0 ? 1 : 0);
     cpu.cycles++;
   } else if (opcode == 0x9509) {
     /* ICALL, 1001 0101 0000 1001 */
@@ -326,14 +341,18 @@ void avrInstruction(CPU cpu) {
     cpu.data[95] = sreg;
   } else if ((opcode & 0xfe0e) == 0x940c) {
     /* JMP, 1001 010k kkkk 110k kkkk kkkk kkkk kkkk */
-    cpu.pc = (cpu.progMem[cpu.pc + 1] | ((opcode & 1) << 16) | ((opcode & 0x1f0) << 13)) - 1;
+    cpu.pc = (cpu.progMem[cpu.pc + 1] |
+            ((opcode & 1) << 16) |
+            ((opcode & 0x1f0) << 13)) -
+        1;
     cpu.cycles += 2;
   } else if ((opcode & 0xfe0f) == 0x9206) {
     /* LAC, 1001 001r rrrr 0110 */
     final int r = (opcode & 0x1f0) >> 4;
     final int clear = cpu.data[r];
     final int value = cpu.readData(cpu.dataView.getUint16(30, Endian.little));
-    cpu.writeData(cpu.dataView.getUint16(30, Endian.little), value & (255 - clear));
+    cpu.writeData(
+        cpu.dataView.getUint16(30, Endian.little), value & (255 - clear));
     cpu.data[r] = value;
   } else if ((opcode & 0xfe0f) == 0x9205) {
     /* LAS, 1001 001r rrrr 0101 */
@@ -350,7 +369,8 @@ void avrInstruction(CPU cpu) {
     cpu.data[(opcode & 0x1f0) >> 4] = R;
   } else if ((opcode & 0xf000) == 0xe000) {
     /* LDI, 1110 KKKK dddd KKKK */
-    cpu.data[((opcode & 0xf0) >> 4) + 16] = (opcode & 0xf) | ((opcode & 0xf00) >> 4);
+    cpu.data[((opcode & 0xf0) >> 4) + 16] =
+        (opcode & 0xf) | ((opcode & 0xf00) >> 4);
   } else if ((opcode & 0xfe0f) == 0x9000) {
     /* LDS, 1001 000d dddd 0000 kkkk kkkk kkkk kkkk */
     cpu.cycles++;
@@ -360,7 +380,8 @@ void avrInstruction(CPU cpu) {
   } else if ((opcode & 0xfe0f) == 0x900c) {
     /* LDX, 1001 000d dddd 1100 */
     cpu.cycles++;
-    cpu.data[(opcode & 0x1f0) >> 4] = cpu.readData(cpu.dataView.getUint16(26, Endian.little));
+    cpu.data[(opcode & 0x1f0) >> 4] =
+        cpu.readData(cpu.dataView.getUint16(26, Endian.little));
   } else if ((opcode & 0xfe0f) == 0x900d) {
     /* LDX(INC), 1001 000d dddd 1101 */
     final int x = cpu.dataView.getUint16(26, Endian.little);
@@ -376,7 +397,8 @@ void avrInstruction(CPU cpu) {
   } else if ((opcode & 0xfe0f) == 0x8008) {
     /* LDY, 1000 000d dddd 1000 */
     cpu.cycles++;
-    cpu.data[(opcode & 0x1f0) >> 4] = cpu.readData(cpu.dataView.getUint16(28, Endian.little));
+    cpu.data[(opcode & 0x1f0) >> 4] =
+        cpu.readData(cpu.dataView.getUint16(28, Endian.little));
   } else if ((opcode & 0xfe0f) == 0x9009) {
     /* LDY(INC), 1001 000d dddd 1001 */
     final int y = cpu.dataView.getUint16(28, Endian.little);
@@ -389,20 +411,20 @@ void avrInstruction(CPU cpu) {
     cpu.dataView.setUint16(28, y, Endian.little);
     cpu.cycles++;
     cpu.data[(opcode & 0x1f0) >> 4] = cpu.readData(y);
-  } else if (
-    (opcode & 0xd208) == 0x8008 &&
-    ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)) != 0
-  ) {
+  } else if ((opcode & 0xd208) == 0x8008 &&
+      ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)) !=
+          0) {
     /* LDDY, 10q0 qq0d dddd 1qqq */
     cpu.cycles++;
     cpu.data[(opcode & 0x1f0) >> 4] = cpu.readData(
       cpu.dataView.getUint16(28, Endian.little) +
-        ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)),
+          ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)),
     );
   } else if ((opcode & 0xfe0f) == 0x8000) {
     /* LDZ, 1000 000d dddd 0000 */
     cpu.cycles++;
-    cpu.data[(opcode & 0x1f0) >> 4] = cpu.readData(cpu.dataView.getUint16(30, Endian.little));
+    cpu.data[(opcode & 0x1f0) >> 4] =
+        cpu.readData(cpu.dataView.getUint16(30, Endian.little));
   } else if ((opcode & 0xfe0f) == 0x9001) {
     /* LDZ(INC), 1001 000d dddd 0001 */
     final int z = cpu.dataView.getUint16(30, Endian.little);
@@ -415,15 +437,14 @@ void avrInstruction(CPU cpu) {
     cpu.dataView.setUint16(30, z, Endian.little);
     cpu.cycles++;
     cpu.data[(opcode & 0x1f0) >> 4] = cpu.readData(z);
-  } else if (
-    (opcode & 0xd208) == 0x8000 &&
-    ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)) != 0
-  ) {
+  } else if ((opcode & 0xd208) == 0x8000 &&
+      ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)) !=
+          0) {
     /* LDDZ, 10q0 qq0d dddd 0qqq */
     cpu.cycles++;
     cpu.data[(opcode & 0x1f0) >> 4] = cpu.readData(
       cpu.dataView.getUint16(30, Endian.little) +
-        ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)),
+          ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)),
     );
   } else if (opcode == 0x95c8) {
     /* LPM, 1001 0101 1100 1000 */
@@ -431,7 +452,8 @@ void avrInstruction(CPU cpu) {
     cpu.cycles += 2;
   } else if ((opcode & 0xfe0f) == 0x9004) {
     /* LPM(REG), 1001 000d dddd 0100 */
-    cpu.data[(opcode & 0x1f0) >> 4] = cpu.progBytes[cpu.dataView.getUint16(30, Endian.little)];
+    cpu.data[(opcode & 0x1f0) >> 4] =
+        cpu.progBytes[cpu.dataView.getUint16(30, Endian.little)];
     cpu.cycles += 2;
   } else if ((opcode & 0xfe0f) == 0x9005) {
     /* LPM(INC), 1001 000d dddd 0101 */
@@ -452,7 +474,8 @@ void avrInstruction(CPU cpu) {
     cpu.data[95] = sreg;
   } else if ((opcode & 0xfc00) == 0x2c00) {
     /* MOV, 0010 11rd dddd rrrr */
-    cpu.data[(opcode & 0x1f0) >> 4] = cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
+    cpu.data[(opcode & 0x1f0) >> 4] =
+        cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
   } else if ((opcode & 0xff00) == 0x100) {
     /* MOVW, 0000 0001 dddd rrrr */
     final int r2 = 2 * (opcode & 0xf);
@@ -461,22 +484,30 @@ void avrInstruction(CPU cpu) {
     cpu.data[d2 + 1] = cpu.data[r2 + 1];
   } else if ((opcode & 0xfc00) == 0x9c00) {
     /* MUL, 1001 11rd dddd rrrr */
-    final int R = cpu.data[(opcode & 0x1f0) >> 4] * cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
+    final int R = cpu.data[(opcode & 0x1f0) >> 4] *
+        cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
     cpu.dataView.setUint16(0, R, Endian.little);
-    cpu.data[95] = (cpu.data[95] & 0xfc) | ((0xffff & R) != 0 ? 0 : 2) | ((0x8000 & R) != 0 ? 1 : 0);
+    cpu.data[95] = (cpu.data[95] & 0xfc) |
+        ((0xffff & R) != 0 ? 0 : 2) |
+        ((0x8000 & R) != 0 ? 1 : 0);
     cpu.cycles++;
   } else if ((opcode & 0xff00) == 0x200) {
     /* MULS, 0000 0010 dddd rrrr */
-    final int R =
-      cpu.dataView.getInt8(((opcode & 0xf0) >> 4) + 16) * cpu.dataView.getInt8((opcode & 0xf) + 16);
+    final int R = cpu.dataView.getInt8(((opcode & 0xf0) >> 4) + 16) *
+        cpu.dataView.getInt8((opcode & 0xf) + 16);
     cpu.dataView.setInt16(0, R, Endian.little);
-    cpu.data[95] = (cpu.data[95] & 0xfc) | ((0xffff & R) != 0 ? 0 : 2) | ((0x8000 & R) != 0 ? 1 : 0);
+    cpu.data[95] = (cpu.data[95] & 0xfc) |
+        ((0xffff & R) != 0 ? 0 : 2) |
+        ((0x8000 & R) != 0 ? 1 : 0);
     cpu.cycles++;
   } else if ((opcode & 0xff88) == 0x300) {
     /* MULSU, 0000 0011 0ddd 0rrr */
-    final int R = cpu.dataView.getInt8(((opcode & 0x70) >> 4) + 16) * cpu.data[(opcode & 7) + 16];
+    final int R = cpu.dataView.getInt8(((opcode & 0x70) >> 4) + 16) *
+        cpu.data[(opcode & 7) + 16];
     cpu.dataView.setInt16(0, R, Endian.little);
-    cpu.data[95] = (cpu.data[95] & 0xfc) | ((0xffff & R) != 0 ? 0 : 2) | ((0x8000 & R) != 0 ? 1 : 0);
+    cpu.data[95] = (cpu.data[95] & 0xfc) |
+        ((0xffff & R) != 0 ? 0 : 2) |
+        ((0x8000 & R) != 0 ? 1 : 0);
     cpu.cycles++;
   } else if ((opcode & 0xfe0f) == 0x9401) {
     /* NEG, 1001 010d dddd 0001 */
@@ -497,7 +528,8 @@ void avrInstruction(CPU cpu) {
     /* NOP */
   } else if ((opcode & 0xfc00) == 0x2800) {
     /* OR, 0010 10rd dddd rrrr */
-    final int R = cpu.data[(opcode & 0x1f0) >> 4] | cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
+    final int R = cpu.data[(opcode & 0x1f0) >> 4] |
+        cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
     cpu.data[(opcode & 0x1f0) >> 4] = R;
     int sreg = cpu.data[95] & 0xe1;
     sreg |= ((R) != 0) ? 0 : 2;
@@ -506,7 +538,8 @@ void avrInstruction(CPU cpu) {
     cpu.data[95] = sreg;
   } else if ((opcode & 0xf000) == 0x6000) {
     /* SBR, 0110 KKKK dddd KKKK */
-    final int R = cpu.data[((opcode & 0xf0) >> 4) + 16] | ((opcode & 0xf) | ((opcode & 0xf00) >> 4));
+    final int R = cpu.data[((opcode & 0xf0) >> 4) + 16] |
+        ((opcode & 0xf) | ((opcode & 0xf00) >> 4));
     cpu.data[((opcode & 0xf0) >> 4) + 16] = R;
     int sreg = cpu.data[95] & 0xe1;
     sreg |= ((R) != 0) ? 0 : 2;
@@ -515,7 +548,8 @@ void avrInstruction(CPU cpu) {
     cpu.data[95] = sreg;
   } else if ((opcode & 0xf800) == 0xb800) {
     /* OUT, 1011 1AAr rrrr AAAA */
-    cpu.writeData(((opcode & 0xf) | ((opcode & 0x600) >> 5)) + 32, cpu.data[(opcode & 0x1f0) >> 4]);
+    cpu.writeData(((opcode & 0xf) | ((opcode & 0x600) >> 5)) + 32,
+        cpu.data[(opcode & 0x1f0) >> 4]);
   } else if ((opcode & 0xfe0f) == 0x900f) {
     /* POP, 1001 000d dddd 1111 */
     final int value = cpu.dataView.getUint16(93, Endian.little) + 1;
@@ -545,7 +579,8 @@ void avrInstruction(CPU cpu) {
   } else if (opcode == 0x9508) {
     /* RET, 1001 0101 0000 1000 */
     final bool pc22Bits = cpu.pc22Bits;
-    final int i = cpu.dataView.getUint16(93, Endian.little) + (pc22Bits ? 3 : 2);
+    final int i =
+        cpu.dataView.getUint16(93, Endian.little) + (pc22Bits ? 3 : 2);
     cpu.dataView.setUint16(93, i, Endian.little);
     cpu.pc = (cpu.data[i - 1] << 8) + cpu.data[i] - 1;
     if (pc22Bits) {
@@ -555,7 +590,8 @@ void avrInstruction(CPU cpu) {
   } else if (opcode == 0x9518) {
     /* RETI, 1001 0101 0001 1000 */
     final bool pc22Bits = cpu.pc22Bits;
-    final int i = cpu.dataView.getUint16(93, Endian.little) + (pc22Bits ? 3 : 2);
+    final int i =
+        cpu.dataView.getUint16(93, Endian.little) + (pc22Bits ? 3 : 2);
     cpu.dataView.setUint16(93, i, Endian.little);
     cpu.pc = (cpu.data[i - 1] << 8) + cpu.data[i] - 1;
     if (pc22Bits) {
@@ -586,7 +622,9 @@ void avrInstruction(CPU cpu) {
     int sreg = cpu.data[95];
     final int R = val1 - val2 - (sreg & 1);
     cpu.data[(opcode & 0x1f0) >> 4] = R;
-    sreg = (sreg & 0xc0) | (R == 0 && ((sreg >> 1) & 1) != 0 ? 2 : 0) | (val2 + (sreg & 1) > val1 ? 1 : 0);
+    sreg = (sreg & 0xc0) |
+        (R == 0 && ((sreg >> 1) & 1) != 0 ? 2 : 0) |
+        (val2 + (sreg & 1) > val1 ? 1 : 0);
     sreg |= ((128 & R) != 0) ? 4 : 0;
     sreg |= (((val1 ^ val2) & (val1 ^ R) & 128) != 0) ? 8 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
@@ -599,7 +637,9 @@ void avrInstruction(CPU cpu) {
     int sreg = cpu.data[95];
     final int R = val1 - val2 - (sreg & 1);
     cpu.data[((opcode & 0xf0) >> 4) + 16] = R;
-    sreg = (sreg & 0xc0) | (R == 0 && ((sreg >> 1) & 1) != 0 ? 2 : 0) | (val2 + (sreg & 1) > val1 ? 1 : 0);
+    sreg = (sreg & 0xc0) |
+        (R == 0 && ((sreg >> 1) & 1) != 0 ? 2 : 0) |
+        (val2 + (sreg & 1) > val1 ? 1 : 0);
     sreg |= ((128 & R) != 0) ? 4 : 0;
     sreg |= (((val1 ^ val2) & (val1 ^ R) & 128) != 0) ? 8 : 0;
     sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
@@ -679,7 +719,8 @@ void avrInstruction(CPU cpu) {
     cpu.cycles++;
   } else if ((opcode & 0xfe0f) == 0x920c) {
     /* STX, 1001 001r rrrr 1100 */
-    cpu.writeData(cpu.dataView.getUint16(26, Endian.little), cpu.data[(opcode & 0x1f0) >> 4]);
+    cpu.writeData(cpu.dataView.getUint16(26, Endian.little),
+        cpu.data[(opcode & 0x1f0) >> 4]);
     cpu.cycles++;
   } else if ((opcode & 0xfe0f) == 0x920d) {
     /* STX(INC), 1001 001r rrrr 1101 */
@@ -696,7 +737,8 @@ void avrInstruction(CPU cpu) {
     cpu.cycles++;
   } else if ((opcode & 0xfe0f) == 0x8208) {
     /* STY, 1000 001r rrrr 1000 */
-    cpu.writeData(cpu.dataView.getUint16(28, Endian.little), cpu.data[(opcode & 0x1f0) >> 4]);
+    cpu.writeData(cpu.dataView.getUint16(28, Endian.little),
+        cpu.data[(opcode & 0x1f0) >> 4]);
     cpu.cycles++;
   } else if ((opcode & 0xfe0f) == 0x9209) {
     /* STY(INC), 1001 001r rrrr 1001 */
@@ -712,20 +754,20 @@ void avrInstruction(CPU cpu) {
     cpu.dataView.setUint16(28, y, Endian.little);
     cpu.writeData(y, i);
     cpu.cycles++;
-  } else if (
-    (opcode & 0xd208) == 0x8208 &&
-    ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)) != 0
-  ) {
+  } else if ((opcode & 0xd208) == 0x8208 &&
+      ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)) !=
+          0) {
     /* STDY, 10q0 qq1r rrrr 1qqq */
     cpu.writeData(
       cpu.dataView.getUint16(28, Endian.little) +
-        ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)),
+          ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)),
       cpu.data[(opcode & 0x1f0) >> 4],
     );
     cpu.cycles++;
   } else if ((opcode & 0xfe0f) == 0x8200) {
     /* STZ, 1000 001r rrrr 0000 */
-    cpu.writeData(cpu.dataView.getUint16(30, Endian.little), cpu.data[(opcode & 0x1f0) >> 4]);
+    cpu.writeData(cpu.dataView.getUint16(30, Endian.little),
+        cpu.data[(opcode & 0x1f0) >> 4]);
     cpu.cycles++;
   } else if ((opcode & 0xfe0f) == 0x9201) {
     /* STZ(INC), 1001 001r rrrr 0001 */
@@ -740,14 +782,13 @@ void avrInstruction(CPU cpu) {
     cpu.dataView.setUint16(30, z, Endian.little);
     cpu.writeData(z, i);
     cpu.cycles++;
-  } else if (
-    (opcode & 0xd208) == 0x8200 &&
-    ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)) != 0
-  ) {
+  } else if ((opcode & 0xd208) == 0x8200 &&
+      ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)) !=
+          0) {
     /* STDZ, 10q0 qq1r rrrr 0qqq */
     cpu.writeData(
       cpu.dataView.getUint16(30, Endian.little) +
-        ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)),
+          ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)),
       cpu.data[(opcode & 0x1f0) >> 4],
     );
     cpu.cycles++;

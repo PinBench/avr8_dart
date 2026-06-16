@@ -263,7 +263,8 @@ class WGMConfig {
   final int tovUpdateMode;
   final int flags;
 
-  const WGMConfig(this.timerMode, this.topValue, this.ocrUpdateMode, this.tovUpdateMode, this.flags);
+  const WGMConfig(this.timerMode, this.topValue, this.ocrUpdateMode,
+      this.tovUpdateMode, this.flags);
 }
 
 const OCToggle = 1;
@@ -281,28 +282,38 @@ const wgmModes8Bit = [
   WGMConfig(CTC, TopOCRA, OCRUpdateMode.Immediate, TOVUpdateMode.Max, 0),
   WGMConfig(FastPWM, 0xff, OCRUpdateMode.Bottom, TOVUpdateMode.Max, 0),
   WGMConfig(Reserved, 0xff, OCRUpdateMode.Immediate, TOVUpdateMode.Max, 0),
-  WGMConfig(PWMPhaseCorrect, TopOCRA, OCRUpdateMode.Top, TOVUpdateMode.Bottom, OCToggle),
+  WGMConfig(PWMPhaseCorrect, TopOCRA, OCRUpdateMode.Top, TOVUpdateMode.Bottom,
+      OCToggle),
   WGMConfig(Reserved, 0xff, OCRUpdateMode.Immediate, TOVUpdateMode.Max, 0),
-  WGMConfig(FastPWM, TopOCRA, OCRUpdateMode.Bottom, TOVUpdateMode.Top, OCToggle),
+  WGMConfig(
+      FastPWM, TopOCRA, OCRUpdateMode.Bottom, TOVUpdateMode.Top, OCToggle),
 ];
 
 const wgmModes16Bit = [
   WGMConfig(Normal, 0xffff, OCRUpdateMode.Immediate, TOVUpdateMode.Max, 0),
-  WGMConfig(PWMPhaseCorrect, 0x00ff, OCRUpdateMode.Top, TOVUpdateMode.Bottom, 0),
-  WGMConfig(PWMPhaseCorrect, 0x01ff, OCRUpdateMode.Top, TOVUpdateMode.Bottom, 0),
-  WGMConfig(PWMPhaseCorrect, 0x03ff, OCRUpdateMode.Top, TOVUpdateMode.Bottom, 0),
+  WGMConfig(
+      PWMPhaseCorrect, 0x00ff, OCRUpdateMode.Top, TOVUpdateMode.Bottom, 0),
+  WGMConfig(
+      PWMPhaseCorrect, 0x01ff, OCRUpdateMode.Top, TOVUpdateMode.Bottom, 0),
+  WGMConfig(
+      PWMPhaseCorrect, 0x03ff, OCRUpdateMode.Top, TOVUpdateMode.Bottom, 0),
   WGMConfig(CTC, TopOCRA, OCRUpdateMode.Immediate, TOVUpdateMode.Max, 0),
   WGMConfig(FastPWM, 0x00ff, OCRUpdateMode.Bottom, TOVUpdateMode.Top, 0),
   WGMConfig(FastPWM, 0x01ff, OCRUpdateMode.Bottom, TOVUpdateMode.Top, 0),
   WGMConfig(FastPWM, 0x03ff, OCRUpdateMode.Bottom, TOVUpdateMode.Top, 0),
-  WGMConfig(PWMPhaseFrequencyCorrect, TopICR, OCRUpdateMode.Bottom, TOVUpdateMode.Bottom, 0),
-  WGMConfig(PWMPhaseFrequencyCorrect, TopOCRA, OCRUpdateMode.Bottom, TOVUpdateMode.Bottom, OCToggle),
-  WGMConfig(PWMPhaseCorrect, TopICR, OCRUpdateMode.Top, TOVUpdateMode.Bottom, 0),
-  WGMConfig(PWMPhaseCorrect, TopOCRA, OCRUpdateMode.Top, TOVUpdateMode.Bottom, OCToggle),
+  WGMConfig(PWMPhaseFrequencyCorrect, TopICR, OCRUpdateMode.Bottom,
+      TOVUpdateMode.Bottom, 0),
+  WGMConfig(PWMPhaseFrequencyCorrect, TopOCRA, OCRUpdateMode.Bottom,
+      TOVUpdateMode.Bottom, OCToggle),
+  WGMConfig(
+      PWMPhaseCorrect, TopICR, OCRUpdateMode.Top, TOVUpdateMode.Bottom, 0),
+  WGMConfig(PWMPhaseCorrect, TopOCRA, OCRUpdateMode.Top, TOVUpdateMode.Bottom,
+      OCToggle),
   WGMConfig(CTC, TopICR, OCRUpdateMode.Immediate, TOVUpdateMode.Max, 0),
   WGMConfig(Reserved, 0xffff, OCRUpdateMode.Immediate, TOVUpdateMode.Max, 0),
   WGMConfig(FastPWM, TopICR, OCRUpdateMode.Bottom, TOVUpdateMode.Top, OCToggle),
-  WGMConfig(FastPWM, TopOCRA, OCRUpdateMode.Bottom, TOVUpdateMode.Top, OCToggle),
+  WGMConfig(
+      FastPWM, TopOCRA, OCRUpdateMode.Bottom, TOVUpdateMode.Top, OCToggle),
 ];
 
 PinOverrideMode compToOverride(int comp) {
@@ -362,7 +373,7 @@ class AVRTimer {
   AVRTimer(this.cpu, this.config) {
     MAX = config.bits == 16 ? 0xffff : 0xff;
     hasOCRC = config.OCRC > 0;
-    
+
     OVF = AVRInterruptConfig(
       address: config.ovfInterrupt,
       flagRegister: config.TIFR,
@@ -393,7 +404,7 @@ class AVRTimer {
     );
 
     updateWGMConfig();
-    
+
     cpu.readHooks[config.TCNT] = (int addr) {
       count(reschedule: false);
       if (config.bits == 16) {
@@ -402,7 +413,8 @@ class AVRTimer {
       return cpu.data[addr] = tcnt & 0xff;
     };
 
-    cpu.writeHooks[config.TCNT] = (int value, int oldValue, int addr, int mask) {
+    cpu.writeHooks[config.TCNT] =
+        (int value, int oldValue, int addr, int mask) {
       tcntNext = (highByteTemp << 8) | value;
       countingUp = true;
       tcntUpdated = true;
@@ -412,25 +424,28 @@ class AVRTimer {
       }
       return false; // Actually let's return true? wait... TCNT writes update registers. We should not return true unless we fully handle it? In TS `this.cpu.data[config.TCNT] = ...` was not intercepted except to update Next. The TS version returns undefined (falsy) for TCNT writeHook. So return false.
     };
-    
-    cpu.writeHooks[config.OCRA] = (int value, int oldValue, int addr, int mask) {
+
+    cpu.writeHooks[config.OCRA] =
+        (int value, int oldValue, int addr, int mask) {
       nextOcrA = (highByteTemp << 8) | value;
       if (ocrUpdateMode == OCRUpdateMode.Immediate) {
         ocrA = nextOcrA;
       }
       return false;
     };
-    
-    cpu.writeHooks[config.OCRB] = (int value, int oldValue, int addr, int mask) {
+
+    cpu.writeHooks[config.OCRB] =
+        (int value, int oldValue, int addr, int mask) {
       nextOcrB = (highByteTemp << 8) | value;
       if (ocrUpdateMode == OCRUpdateMode.Immediate) {
         ocrB = nextOcrB;
       }
       return false;
     };
-    
+
     if (hasOCRC) {
-      cpu.writeHooks[config.OCRC] = (int value, int oldValue, int addr, int mask) {
+      cpu.writeHooks[config.OCRC] =
+          (int value, int oldValue, int addr, int mask) {
         nextOcrC = (highByteTemp << 8) | value;
         if (ocrUpdateMode == OCRUpdateMode.Immediate) {
           ocrC = nextOcrC;
@@ -438,24 +453,25 @@ class AVRTimer {
         return false;
       };
     }
-    
+
     if (config.bits == 16) {
-      cpu.writeHooks[config.ICR] = (int value, int oldValue, int addr, int mask) {
+      cpu.writeHooks[config.ICR] =
+          (int value, int oldValue, int addr, int mask) {
         icr = (highByteTemp << 8) | value;
         return false;
       };
-      
+
       bool updateTempRegister(int value, int oldValue, int addr, int mask) {
         highByteTemp = value;
         return false;
       }
-      
+
       bool updateOCRHighRegister(int value, int oldValue, int addr, int mask) {
         highByteTemp = value & (ocrMask >> 8);
         cpu.data[addr] = highByteTemp;
         return true;
       }
-      
+
       cpu.writeHooks[config.TCNT + 1] = updateTempRegister;
       cpu.writeHooks[config.OCRA + 1] = updateOCRHighRegister;
       cpu.writeHooks[config.OCRB + 1] = updateOCRHighRegister;
@@ -464,14 +480,16 @@ class AVRTimer {
       }
       cpu.writeHooks[config.ICR + 1] = updateTempRegister;
     }
-    
-    cpu.writeHooks[config.TCCRA] = (int value, int oldValue, int addr, int mask) {
+
+    cpu.writeHooks[config.TCCRA] =
+        (int value, int oldValue, int addr, int mask) {
       cpu.data[config.TCCRA] = value;
       updateWGMConfig();
       return true;
     };
-    
-    cpu.writeHooks[config.TCCRB] = (int value, int oldValue, int addr, int mask) {
+
+    cpu.writeHooks[config.TCCRB] =
+        (int value, int oldValue, int addr, int mask) {
       if (config.TCCRC == 0) {
         checkForceCompare(value);
         value &= ~(FOCA | FOCB);
@@ -483,23 +501,26 @@ class AVRTimer {
       updateWGMConfig();
       return true;
     };
-    
+
     if (config.TCCRC != 0) {
-      cpu.writeHooks[config.TCCRC] = (int value, int oldValue, int addr, int mask) {
+      cpu.writeHooks[config.TCCRC] =
+          (int value, int oldValue, int addr, int mask) {
         checkForceCompare(value);
         return false;
       };
     }
-    
-    cpu.writeHooks[config.TIFR] = (int value, int oldValue, int addr, int mask) {
+
+    cpu.writeHooks[config.TIFR] =
+        (int value, int oldValue, int addr, int mask) {
       cpu.data[config.TIFR] = value;
       cpu.clearInterruptByFlag(OVF, value);
       cpu.clearInterruptByFlag(OCFA, value);
       cpu.clearInterruptByFlag(OCFB, value);
       return true;
     };
-    
-    cpu.writeHooks[config.TIMSK] = (int value, int oldValue, int addr, int mask) {
+
+    cpu.writeHooks[config.TIMSK] =
+        (int value, int oldValue, int addr, int mask) {
       cpu.updateInterruptEnable(OVF, value);
       cpu.updateInterruptEnable(OCFA, value);
       cpu.updateInterruptEnable(OCFB, value);
@@ -562,7 +583,7 @@ class AVRTimer {
     final wgmModes = config.bits == 16 ? wgmModes16Bit : wgmModes8Bit;
     final tccraVal = cpu.data[config.TCCRA];
     final wgmConfig = wgmModes[WGM];
-    
+
     timerMode = wgmConfig.timerMode;
     topValue = wgmConfig.topValue;
     ocrUpdateMode = wgmConfig.ocrUpdateMode;
@@ -614,13 +635,14 @@ class AVRTimer {
       final counterDelta = external ? 1 : (delta ~/ divider);
       lastCycle += counterDelta * divider;
       final val = tcnt;
-      
-      final phasePwm = timerMode == PWMPhaseCorrect || timerMode == PWMPhaseFrequencyCorrect;
+
+      final phasePwm =
+          timerMode == PWMPhaseCorrect || timerMode == PWMPhaseFrequencyCorrect;
       final newVal = phasePwm
           ? phasePwmCount(val, counterDelta)
           : (val + counterDelta) % (TOP + 1);
       final overflow = val + counterDelta > TOP;
-      
+
       if (!tcntUpdated) {
         tcnt = newVal;
         if (!phasePwm) {
@@ -645,7 +667,7 @@ class AVRTimer {
         }
       }
     }
-    
+
     if (tcntUpdated) {
       tcnt = tcntNext;
       tcntUpdated = false;
@@ -656,7 +678,7 @@ class AVRTimer {
         ocrC = nextOcrC;
       }
     }
-    
+
     if (updateDividerFlag) {
       final currentCS = CS;
       final externalClockPin = config.externalClockPin;
@@ -664,7 +686,7 @@ class AVRTimer {
       lastCycle = newDivider != 0 ? cpu.cycles : 0;
       updateDividerFlag = false;
       divider = newDivider;
-      
+
       if (config.externalClockPort != 0 && externalClockPort == null) {
         externalClockPort = cpu.gpioByPort[config.externalClockPort];
       }
@@ -674,13 +696,15 @@ class AVRTimer {
       if (newDivider != 0) {
         cpu.addClockEvent(countEvent, lastCycle + newDivider - cpu.cycles);
       } else if (externalClockPort != null &&
-          (currentCS == ExternalClockMode.FallingEdge || currentCS == ExternalClockMode.RisingEdge)) {
-        externalClockPort!.externalClockListeners[externalClockPin] = externalClockCallback;
+          (currentCS == ExternalClockMode.FallingEdge ||
+              currentCS == ExternalClockMode.RisingEdge)) {
+        externalClockPort!.externalClockListeners[externalClockPin] =
+            externalClockCallback;
         externalClockRisingEdge = currentCS == ExternalClockMode.RisingEdge;
       }
       return;
     }
-    
+
     if (reschedule && divider != 0) {
       cpu.addClockEvent(countEvent, lastCycle + divider - cpu.cycles);
     }
@@ -745,15 +769,19 @@ class AVRTimer {
 
   void timerUpdated(int value, int prevValue) {
     final overflow = prevValue > value;
-    if (((prevValue < ocrA || overflow) && value >= ocrA) || (prevValue < ocrA && overflow)) {
+    if (((prevValue < ocrA || overflow) && value >= ocrA) ||
+        (prevValue < ocrA && overflow)) {
       cpu.setInterruptFlag(OCFA);
       if (compA != 0) updateCompPin(compA, 'A');
     }
-    if (((prevValue < ocrB || overflow) && value >= ocrB) || (prevValue < ocrB && overflow)) {
+    if (((prevValue < ocrB || overflow) && value >= ocrB) ||
+        (prevValue < ocrB && overflow)) {
       cpu.setInterruptFlag(OCFB);
       if (compB != 0) updateCompPin(compB, 'B');
     }
-    if (hasOCRC && (((prevValue < ocrC || overflow) && value >= ocrC) || (prevValue < ocrC && overflow))) {
+    if (hasOCRC &&
+        (((prevValue < ocrC || overflow) && value >= ocrC) ||
+            (prevValue < ocrC && overflow))) {
       cpu.setInterruptFlag(OCFC);
       if (compC != 0) updateCompPin(compC, 'C');
     }
@@ -783,7 +811,9 @@ class AVRTimer {
         if (compValue == 1) {
           newValue = bottom ? PinOverrideMode.None : PinOverrideMode.Toggle;
         } else {
-          newValue = invertingMode != bottom ? PinOverrideMode.Set : PinOverrideMode.Clear;
+          newValue = invertingMode != bottom
+              ? PinOverrideMode.Set
+              : PinOverrideMode.Clear;
         }
         break;
       case PWMPhaseCorrect:

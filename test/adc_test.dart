@@ -1,4 +1,3 @@
-import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'package:avr8_dart/src/cpu/cpu.dart';
 import 'package:avr8_dart/src/peripherals/adc.dart';
@@ -143,7 +142,8 @@ void main() {
 
       final low = cpu.data[R16];
       final high = cpu.data[R17];
-      expect((high << 8) | low, equals(0)); // We should read 0 since the ADC hasn't been enabled
+      expect((high << 8) | low,
+          equals(0)); // We should read 0 since the ADC hasn't been enabled
     });
   });
 }

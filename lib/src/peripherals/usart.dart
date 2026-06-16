@@ -1,5 +1,5 @@
 import '../cpu/cpu.dart';
-import '../types.dart';
+
 
 class USARTConfig {
   final int rxCompleteInterrupt;
@@ -122,7 +122,8 @@ class AVRUSART {
 
     reset();
 
-    cpu.writeHooks[config.UCSRA] = (int value, int oldValue, int addr, int mask) {
+    cpu.writeHooks[config.UCSRA] =
+        (int value, int oldValue, int addr, int mask) {
       cpu.data[config.UCSRA] = value & (UCSRA_MPCM | UCSRA_U2X);
       cpu.clearInterruptByFlag(TXC, value);
       if ((value & UCSRA_CFG_MASK) != (oldValue & UCSRA_CFG_MASK)) {
@@ -131,7 +132,8 @@ class AVRUSART {
       return true;
     };
 
-    cpu.writeHooks[config.UCSRB] = (int value, int oldValue, int addr, int mask) {
+    cpu.writeHooks[config.UCSRB] =
+        (int value, int oldValue, int addr, int mask) {
       cpu.updateInterruptEnable(RXC, value);
       cpu.updateInterruptEnable(UDRE, value);
       cpu.updateInterruptEnable(TXC, value);
@@ -149,7 +151,8 @@ class AVRUSART {
       return true;
     };
 
-    cpu.writeHooks[config.UCSRC] = (int value, int oldValue, int addr, int mask) {
+    cpu.writeHooks[config.UCSRC] =
+        (int value, int oldValue, int addr, int mask) {
       cpu.data[config.UCSRC] = value;
       onConfigurationChange?.call();
       return true;
@@ -185,13 +188,15 @@ class AVRUSART {
       return false;
     };
 
-    cpu.writeHooks[config.UBRRH] = (int value, int oldValue, int addr, int mask) {
+    cpu.writeHooks[config.UBRRH] =
+        (int value, int oldValue, int addr, int mask) {
       cpu.data[config.UBRRH] = value;
       onConfigurationChange?.call();
       return true;
     };
 
-    cpu.writeHooks[config.UBRRL] = (int value, int oldValue, int addr, int mask) {
+    cpu.writeHooks[config.UBRRL] =
+        (int value, int oldValue, int addr, int mask) {
       cpu.data[config.UBRRL] = value;
       onConfigurationChange?.call();
       return true;
@@ -201,7 +206,8 @@ class AVRUSART {
   void reset() {
     cpu.data[config.UCSRA] = UCSRA_UDRE;
     cpu.data[config.UCSRB] = 0;
-    cpu.data[config.UCSRC] = UCSRC_UCSZ1 | UCSRC_UCSZ0; // default: 8 bits per byte
+    cpu.data[config.UCSRC] =
+        UCSRC_UCSZ1 | UCSRC_UCSZ0; // default: 8 bits per byte
     rxBusyValue = false;
     rxByte = 0;
     lineBuffer = '';

@@ -56,7 +56,8 @@ void main() {
       expect(cpu.readData(TCNT1), equals(1));
     });
 
-    test('should update timer every 128 ticks when prescaler is 128 (CS=8)', () {
+    test('should update timer every 128 ticks when prescaler is 128 (CS=8)',
+        () {
       final ctx = createTimer();
       final cpu = ctx.cpu;
       cpu.writeData(TCCR1, CS13);

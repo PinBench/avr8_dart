@@ -44,14 +44,14 @@ void main() {
     test('should invoke the listeners when the port is written to', () {
       final cpu = CPU(Uint16List(1024));
       final port = AVRIOPort(cpu, portBConfig);
-      
+
       int? lastValue;
       int? lastOldValue;
       port.addListener((int value, int oldValue) {
         lastValue = value;
         lastOldValue = oldValue;
       });
-      
+
       cpu.writeData(DDRB, 0x0f);
       cpu.writeData(PORTB, 0x55);
       expect(lastValue, equals(0x55));
@@ -76,7 +76,8 @@ void main() {
       expect(lastOldValue, equals(0x55));
     });
 
-    test('should invoke the listeners when pullup register enabled (issue #62)', () {
+    test('should invoke the listeners when pullup register enabled (issue #62)',
+        () {
       final cpu = CPU(Uint16List(1024));
       final port = AVRIOPort(cpu, portBConfig);
 
@@ -106,13 +107,15 @@ void main() {
       cpu.writeData(DDRB, 0x0f);
       cpu.writeData(PORTB, 0x55);
       cpu.writeData(PINB, 0x01);
-      
+
       expect(lastValue, equals(0x54));
       expect(lastOldValue, equals(0x55));
       expect(cpu.data[PINB], equals(0x4)); // PINB should return port value
     });
 
-    test('should only affect one pin when writing to PIN using SBI (issue #103)', () {
+    test(
+        'should only affect one pin when writing to PIN using SBI (issue #103)',
+        () {
       final progMem = Uint16List(1024);
       progMem[0] = 0xe488; // ldi r24, 0x48
       progMem[1] = 0xb98a; // out DDRD, r24
@@ -144,21 +147,23 @@ void main() {
 
       // Now we toggle pin 6
       avrInstruction(cpu);
-      
+
       expect(lastValue, equals(0x08));
       expect(lastOldValue, equals(0x48));
       expect(cpu.data[PORTD], equals(0x8));
     });
 
-    test('should update the PIN register on output compare (OCR) match (issue #102)', () {
+    test(
+        'should update the PIN register on output compare (OCR) match (issue #102)',
+        () {
       final cpu = CPU(Uint16List(1024));
       final port = AVRIOPort(cpu, portBConfig);
-      
+
       cpu.writeData(DDRB, 1 << 1);
       port.timerOverridePin(1, PinOverrideMode.Set);
       expect(port.pinState(1), equals(PinState.High));
       expect(cpu.data[PINB], equals(1 << 1));
-      
+
       port.timerOverridePin(1, PinOverrideMode.Clear);
       expect(port.pinState(1), equals(PinState.Low));
       expect(cpu.data[PINB], equals(0));
@@ -168,12 +173,12 @@ void main() {
       test('should remove the given listener', () {
         final cpu = CPU(Uint16List(1024));
         final port = AVRIOPort(cpu, portBConfig);
-        
+
         int callCount = 0;
         void listener(int value, int oldValue) {
           callCount++;
         }
-        
+
         port.addListener(listener);
         cpu.writeData(DDRB, 0x0f);
         port.removeListener(listener);
@@ -183,7 +188,8 @@ void main() {
     });
 
     group('pinState', () {
-      test('should return PinState.High when the pin set to output and HIGH', () {
+      test('should return PinState.High when the pin set to output and HIGH',
+          () {
         final cpu = CPU(Uint16List(1024));
         final port = AVRIOPort(cpu, portBConfig);
         cpu.writeData(DDRB, 0x1);
@@ -205,7 +211,9 @@ void main() {
         expect(port.pinState(PB1), equals(PinState.Input));
       });
 
-      test('should return PinState.InputPullUp when the pin is set to input with pullup', () {
+      test(
+          'should return PinState.InputPullUp when the pin is set to input with pullup',
+          () {
         final cpu = CPU(Uint16List(1024));
         final port = AVRIOPort(cpu, portBConfig);
         cpu.writeData(DDRB, 0);
@@ -213,10 +221,12 @@ void main() {
         expect(port.pinState(PB1), equals(PinState.InputPullUp));
       });
 
-      test('should reflect the current port state when called inside a listener', () {
+      test(
+          'should reflect the current port state when called inside a listener',
+          () {
         final cpu = CPU(Uint16List(1024));
         final port = AVRIOPort(cpu, portBConfig);
-        
+
         expect(port.pinState(PB0), equals(PinState.Input));
         cpu.writeData(DDRB, 0x01);
 
@@ -225,21 +235,23 @@ void main() {
           expect(port.pinState(PB0), equals(PinState.High));
           callCount++;
         });
-        
+
         cpu.writeData(PORTB, 0x01);
         expect(callCount, equals(1));
       });
 
-      test('should reflect the current port state when called inside a listener after DDR change', () {
+      test(
+          'should reflect the current port state when called inside a listener after DDR change',
+          () {
         final cpu = CPU(Uint16List(1024));
         final port = AVRIOPort(cpu, portBConfig);
-        
+
         int callCount = 0;
         port.addListener((int value, int oldValue) {
           expect(port.pinState(PB0), equals(PinState.Low));
           callCount++;
         });
-        
+
         expect(port.pinState(PB0), equals(PinState.Input));
         cpu.writeData(DDRB, 0x01);
         expect(callCount, equals(1));
@@ -356,7 +368,8 @@ void main() {
     });
 
     group('Pin change interrupts (PCINT)', () {
-      test('should generate a pin change interrupt when PB3 (PCINT3) goes high', () {
+      test('should generate a pin change interrupt when PB3 (PCINT3) goes high',
+          () {
         final cpu = CPU(Uint16List(1024));
         final port = AVRIOPort(cpu, portBConfig);
         cpu.writeData(PCICR, 1 << PCIE0);
@@ -372,7 +385,8 @@ void main() {
         expect(cpu.data[PCIFR], equals(0));
       });
 
-      test('should generate a pin change interrupt when PB3 (PCINT3) goes low', () {
+      test('should generate a pin change interrupt when PB3 (PCINT3) goes low',
+          () {
         final cpu = CPU(Uint16List(1024));
         final port = AVRIOPort(cpu, portBConfig);
 

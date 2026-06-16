@@ -30,8 +30,10 @@ class AVRClock {
   double cyclesDelta = 0;
 
   AVRClock(this.cpu, this.baseFreqHz, [this.config = clockConfig]) {
-    cpu.writeHooks[config.CLKPR] = (int clkpr, int oldValue, int addr, int mask) {
-      if ((clockEnabledCycles == 0 || clockEnabledCycles < cpu.cycles) && clkpr == CLKPCE) {
+    cpu.writeHooks[config.CLKPR] =
+        (int clkpr, int oldValue, int addr, int mask) {
+      if ((clockEnabledCycles == 0 || clockEnabledCycles < cpu.cycles) &&
+          clkpr == CLKPCE) {
         clockEnabledCycles = cpu.cycles + 4;
       } else if (clockEnabledCycles != 0 && clockEnabledCycles >= cpu.cycles) {
         clockEnabledCycles = 0;
@@ -41,7 +43,8 @@ class AVRClock {
         cpu.data[config.CLKPR] = index;
         if (oldPrescaler != prescalerValue) {
           cyclesDelta =
-              (cpu.cycles + cyclesDelta) * (oldPrescaler / prescalerValue) - cpu.cycles;
+              (cpu.cycles + cyclesDelta) * (oldPrescaler / prescalerValue) -
+                  cpu.cycles;
         }
       }
       return true;

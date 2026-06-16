@@ -28,7 +28,9 @@ void main() {
       expect(cpu.readData(CLKPC), equals(0));
     });
 
-    test('should not update the prescaler if more than 4 cycles passed since setting CLKPCE', () {
+    test(
+        'should not update the prescaler if more than 4 cycles passed since setting CLKPCE',
+        () {
       final cpu = CPU(Uint16List(0x1000));
       final clock = AVRClock(cpu, 16000000, clockConfig);
       cpu.writeData(CLKPC, CLKPCE);
@@ -50,7 +52,9 @@ void main() {
     });
 
     group('time properties', () {
-      test('should return current number of microseconds, derived from base freq + prescaler', () {
+      test(
+          'should return current number of microseconds, derived from base freq + prescaler',
+          () {
         final cpu = CPU(Uint16List(0x1000));
         final clock = AVRClock(cpu, 16000000, clockConfig);
         cpu.writeData(CLKPC, CLKPCE);
@@ -59,7 +63,9 @@ void main() {
         expect(clock.timeMillis, equals(4000)); // 4 seconds
       });
 
-      test('should return current number of milliseconds, derived from base freq + prescaler', () {
+      test(
+          'should return current number of milliseconds, derived from base freq + prescaler',
+          () {
         final cpu = CPU(Uint16List(0x1000));
         final clock = AVRClock(cpu, 16000000, clockConfig);
         cpu.writeData(CLKPC, CLKPCE);
@@ -68,7 +74,9 @@ void main() {
         expect(clock.timeMicros, equals(4e6)); // 4 seconds
       });
 
-      test('should return current number of nanoseconds, derived from base freq + prescaler', () {
+      test(
+          'should return current number of nanoseconds, derived from base freq + prescaler',
+          () {
         final cpu = CPU(Uint16List(0x1000));
         final clock = AVRClock(cpu, 16000000, clockConfig);
         cpu.writeData(CLKPC, CLKPCE);
@@ -77,7 +85,9 @@ void main() {
         expect(clock.timeNanos, equals(4e9)); // 4 seconds
       });
 
-      test('should correctly calculate time when changing the prescale value at runtime', () {
+      test(
+          'should correctly calculate time when changing the prescale value at runtime',
+          () {
         final cpu = CPU(Uint16List(0x1000));
         final clock = AVRClock(cpu, 16000000, clockConfig);
         cpu.cycles = 16000000; // run 1 second at 16MHz

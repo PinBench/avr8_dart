@@ -47,7 +47,9 @@ void main() {
       expect(usart.baudRate, equals(115200));
     });
 
-    test('should correctly calculate the baudRate from UBRR in double-speed mode', () {
+    test(
+        'should correctly calculate the baudRate from UBRR in double-speed mode',
+        () {
       final cpu = CPU(Uint16List(1024));
       final usart = AVRUSART(cpu, usart0Config, FREQ_16MHZ);
       cpu.writeData(UBRR0H, 3);
@@ -236,7 +238,9 @@ void main() {
         expect(cpu.data[UCSR0A] & TXC, equals(0));
       });
 
-      test('should not trigger data TX Complete interrupt if UDR was not written to', () {
+      test(
+          'should not trigger data TX Complete interrupt if UDR was not written to',
+          () {
         final cpu = CPU(Uint16List(1024));
         AVRUSART(cpu, usart0Config, FREQ_16MHZ);
         cpu.writeData(UCSR0B, TXCIE | TXEN);
@@ -261,7 +265,9 @@ void main() {
     });
 
     group('onLineTransmit', () {
-      test('should call onLineTransmit with the current line buffer after every newline', () {
+      test(
+          'should call onLineTransmit with the current line buffer after every newline',
+          () {
         final cpu = CPU(Uint16List(1024));
         final usart = AVRUSART(cpu, usart0Config, FREQ_16MHZ);
         String? transmittedLine;
@@ -291,7 +297,8 @@ void main() {
         expect(transmittedLine, isNull);
       });
 
-      test('should clear the line buffer after each call to onLineTransmit', () {
+      test('should clear the line buffer after each call to onLineTransmit',
+          () {
         final cpu = CPU(Uint16List(1024));
         final usart = AVRUSART(cpu, usart0Config, FREQ_16MHZ);
         String? transmittedLine;
@@ -326,7 +333,8 @@ void main() {
     });
 
     group('Integration tests', () {
-      test('should set the TXC bit after ~1.04mS when baud rate set to 9600', () {
+      test('should set the TXC bit after ~1.04mS when baud rate set to 9600',
+          () {
         final cpu = CPU(Uint16List(1024));
         AVRUSART(cpu, usart0Config, FREQ_16MHZ);
         cpu.writeData(UCSR0B, TXEN);
@@ -340,7 +348,9 @@ void main() {
         expect(cpu.data[UCSR0A] & TXC, equals(TXC));
       });
 
-      test('should be ready to receive the next byte after ~1.04ms when baudrate set to 9600', () {
+      test(
+          'should be ready to receive the next byte after ~1.04ms when baudrate set to 9600',
+          () {
         final cpu = CPU(Uint16List(1024));
         final usart = AVRUSART(cpu, usart0Config, FREQ_16MHZ);
         int callCount = 0;

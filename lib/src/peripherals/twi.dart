@@ -70,7 +70,7 @@ const twiConfig = TWIConfig(
 
 class NoopTWIEventHandler implements TWIEventHandler {
   final AVRTWI twi;
-  
+
   NoopTWIEventHandler(this.twi);
 
   @override
@@ -122,12 +122,13 @@ class AVRTWI {
 
     updateStatus(STATUS_TWI_IDLE);
 
-    cpu.writeHooks[config.TWCR] = (int value, int oldValue, int addr, int mask) {
+    cpu.writeHooks[config.TWCR] =
+        (int value, int oldValue, int addr, int mask) {
       cpu.data[config.TWCR] = value;
       final clearInt = (value & TWCR_TWINT) != 0;
       cpu.clearInterruptByFlag(TWI, value);
       cpu.updateInterruptEnable(TWI, value);
-      
+
       final currentStatus = status;
       if (clearInt && (value & TWCR_TWEN) != 0 && !busy) {
         final twdrValue = cpu.data[config.TWDR];
@@ -138,13 +139,16 @@ class AVRTWI {
           } else if ((value & TWCR_TWSTO) != 0) {
             busy = true;
             eventHandler.stop();
-          } else if (currentStatus == STATUS_START || currentStatus == STATUS_REPEATED_START) {
+          } else if (currentStatus == STATUS_START ||
+              currentStatus == STATUS_REPEATED_START) {
             busy = true;
             eventHandler.connectToSlave(twdrValue >> 1, (twdrValue & 0x1) == 0);
-          } else if (currentStatus == STATUS_SLAW_ACK || currentStatus == STATUS_DATA_SENT_ACK) {
+          } else if (currentStatus == STATUS_SLAW_ACK ||
+              currentStatus == STATUS_DATA_SENT_ACK) {
             busy = true;
             eventHandler.writeByte(twdrValue);
-          } else if (currentStatus == STATUS_SLAR_ACK || currentStatus == STATUS_DATA_RECEIVED_ACK) {
+          } else if (currentStatus == STATUS_SLAR_ACK ||
+              currentStatus == STATUS_DATA_RECEIVED_ACK) {
             busy = true;
             final ack = (value & TWCR_TWEA) != 0;
             eventHandler.readByte(ack);
@@ -176,7 +180,8 @@ class AVRTWI {
 
   void completeStart() {
     busy = false;
-    updateStatus(status == STATUS_TWI_IDLE ? STATUS_START : STATUS_REPEATED_START);
+    updateStatus(
+        status == STATUS_TWI_IDLE ? STATUS_START : STATUS_REPEATED_START);
   }
 
   void completeStop() {

@@ -32,7 +32,8 @@ const SPI2X = 1;
 
 void main() {
   group('SPI', () {
-    test('should correctly calculate the frequency based on SPCR/SPST values', () {
+    test('should correctly calculate the frequency based on SPCR/SPST values',
+        () {
       final cpu = CPU(Uint16List(1024));
       final spi = AVRSPI(cpu, spiConfig, FREQ_16MHZ);
 
@@ -59,7 +60,9 @@ void main() {
       expect(spi.spiFrequency, equals(FREQ_16MHZ / 64));
     });
 
-    test('should correctly report the data order (MSB/LSB first), based on SPCR value', () {
+    test(
+        'should correctly report the data order (MSB/LSB first), based on SPCR value',
+        () {
       final cpu = CPU(Uint16List(1024));
       final spi = AVRSPI(cpu, spiConfig, FREQ_16MHZ);
 
@@ -97,7 +100,9 @@ void main() {
       expect(spi.isMaster, isTrue);
     });
 
-    test('should call the `onByteTransfer` callback when initiating an SPI trasfer by writing to SPDR', () {
+    test(
+        'should call the `onByteTransfer` callback when initiating an SPI trasfer by writing to SPDR',
+        () {
       final cpu = CPU(Uint16List(1024));
       final spi = AVRSPI(cpu, spiConfig, FREQ_16MHZ);
       int callCount = 0;
@@ -182,7 +187,9 @@ void main() {
       expect(cpu.data[R17], equals(0x5b));
     });
 
-    test('should set the WCOL bit in SPSR if writing to SPDR while SPI is already transmitting', () {
+    test(
+        'should set the WCOL bit in SPSR if writing to SPDR while SPI is already transmitting',
+        () {
       final cpu = CPU(Uint16List(1024));
       AVRSPI(cpu, spiConfig, FREQ_16MHZ);
 
@@ -195,7 +202,9 @@ void main() {
       expect(cpu.readData(SPSR) & WCOL, equals(WCOL));
     });
 
-    test('should clear the SPIF bit and fire an interrupt when SPI transfer completes', () {
+    test(
+        'should clear the SPIF bit and fire an interrupt when SPI transfer completes',
+        () {
       final cpu = CPU(Uint16List(1024));
       AVRSPI(cpu, spiConfig, FREQ_16MHZ);
 
@@ -237,7 +246,9 @@ void main() {
       expect(cpu.data[SPSR] & SPIF, equals(0));
     });
 
-    test('should should only update SPDR when tranfer finishes (double buffering)', () {
+    test(
+        'should should only update SPDR when tranfer finishes (double buffering)',
+        () {
       final cpu = CPU(Uint16List(1024));
       final spi = AVRSPI(cpu, spiConfig, FREQ_16MHZ);
       spi.onByte = (value) {

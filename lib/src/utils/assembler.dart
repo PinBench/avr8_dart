@@ -96,7 +96,8 @@ int constValue(dynamic r, [int min = 0, int max = 255]) {
 int fitTwoC(int r, int bits) {
   if (bits < 2) throw 'Need at least 2 bits to be signed.';
   if (bits > 16) throw 'fitTwoC only works on 16bit numbers for now.';
-  if (r.abs() > pow(2, bits - 1)) throw 'Not enough bits for number. ($r, $bits)';
+  if (r.abs() > pow(2, bits - 1))
+    throw 'Not enough bits for number. ($r, $bits)';
   if (r < 0) {
     r = 0xffff + r + 1;
   }
@@ -178,7 +179,8 @@ int stldYZq(String yzq) {
   return r;
 }
 
-typedef OpcodeHandler = Pass1Bytes Function(String? a, String? b, int byteLoc, LabelTable labels);
+typedef OpcodeHandler = Pass1Bytes Function(
+    String? a, String? b, int byteLoc, LabelTable labels);
 
 Pass1BytesString SEflag(int a) {
   return Pass1BytesString(zeroPad(0x9408 | (constValue(a, 0, 7) << 4)));
@@ -363,15 +365,21 @@ final Map<String, OpcodeHandler> OPTABLE = <String, OpcodeHandler>{
     return Pass1BytesString(zeroPad(r));
   },
   'FMUL': (a, b, byteLoc, labels) {
-    final r = 0x0308 | (destRindex(a!, 16, 23) & 0x70) | (srcRindex(b!, 16, 23) & 0x7);
+    final r = 0x0308 |
+        (destRindex(a!, 16, 23) & 0x70) |
+        (srcRindex(b!, 16, 23) & 0x7);
     return Pass1BytesString(zeroPad(r));
   },
   'FMULS': (a, b, byteLoc, labels) {
-    final r = 0x0380 | (destRindex(a!, 16, 23) & 0x70) | (srcRindex(b!, 16, 23) & 0x7);
+    final r = 0x0380 |
+        (destRindex(a!, 16, 23) & 0x70) |
+        (srcRindex(b!, 16, 23) & 0x7);
     return Pass1BytesString(zeroPad(r));
   },
   'FMULSU': (a, b, byteLoc, labels) {
-    final r = 0x0388 | (destRindex(a!, 16, 23) & 0x70) | (srcRindex(b!, 16, 23) & 0x7);
+    final r = 0x0388 |
+        (destRindex(a!, 16, 23) & 0x70) |
+        (srcRindex(b!, 16, 23) & 0x7);
     return Pass1BytesString(zeroPad(r));
   },
   'ICALL': (a, b, byteLoc, labels) => Pass1BytesString('9509'),
@@ -460,7 +468,8 @@ final Map<String, OpcodeHandler> OPTABLE = <String, OpcodeHandler>{
     return Pass1BytesString(zeroPad(r));
   },
   'MOVW': (a, b, byteLoc, labels) {
-    final r = 0x0100 | ((destRindex(a!) >> 1) & 0xf0) | ((destRindex(b!) >> 5) & 0xf);
+    final r =
+        0x0100 | ((destRindex(a!) >> 1) & 0xf0) | ((destRindex(b!) >> 5) & 0xf);
     return Pass1BytesString(zeroPad(r));
   },
   'MUL': (a, b, byteLoc, labels) {
@@ -468,11 +477,15 @@ final Map<String, OpcodeHandler> OPTABLE = <String, OpcodeHandler>{
     return Pass1BytesString(zeroPad(r));
   },
   'MULS': (a, b, byteLoc, labels) {
-    final r = 0x0200 | (destRindex(a!, 16, 31) & 0xf0) | (srcRindex(b!, 16, 31) & 0xf);
+    final r = 0x0200 |
+        (destRindex(a!, 16, 31) & 0xf0) |
+        (srcRindex(b!, 16, 31) & 0xf);
     return Pass1BytesString(zeroPad(r));
   },
   'MULSU': (a, b, byteLoc, labels) {
-    final r = 0x0300 | (destRindex(a!, 16, 23) & 0x70) | (srcRindex(b!, 16, 23) & 0x7);
+    final r = 0x0300 |
+        (destRindex(a!, 16, 23) & 0x70) |
+        (srcRindex(b!, 16, 23) & 0x7);
     return Pass1BytesString(zeroPad(r));
   },
   'NEG': (a, b, byteLoc, labels) {
@@ -637,8 +650,12 @@ class AssembleResult {
   final List<String> errors;
   final List<LineTable> lines;
   final Uint8List? bytes;
-  
-  AssembleResult({required this.labels, required this.errors, required this.lines, this.bytes});
+
+  AssembleResult(
+      {required this.labels,
+      required this.errors,
+      required this.lines,
+      this.bytes});
 }
 
 class PassOneResult {
@@ -646,7 +663,8 @@ class PassOneResult {
   final List<String> errors;
   final List<LineTablePass1> lines;
 
-  PassOneResult({required this.labels, required this.errors, required this.lines});
+  PassOneResult(
+      {required this.labels, required this.errors, required this.lines});
 }
 
 PassOneResult passOne(String inputdata) {
@@ -665,7 +683,8 @@ PassOneResult passOne(String inputdata) {
     String res = lines[idx].trim();
     if (res.isEmpty) continue;
 
-    final lt = LineTablePass1(line: idx + 1, text: res, bytes: Pass1BytesList([]), byteOffset: 0);
+    final lt = LineTablePass1(
+        line: idx + 1, text: res, bytes: Pass1BytesList([]), byteOffset: 0);
     res = res.replaceAll(commentReg, '').trim();
     if (res.isEmpty) continue;
 
@@ -688,14 +707,14 @@ PassOneResult passOne(String inputdata) {
       }
 
       final instruction = instructionStr.toUpperCase().trim();
-      
+
       String? arg1 = resMatch.group(2);
       String? arg2 = resMatch.group(3);
 
       switch (instruction) {
         case '_REPLACE':
           if (arg1 != null && arg2 != null) {
-             replacements[arg1] = arg2;
+            replacements[arg1] = arg2;
           }
           continue;
         case '_LOC':
@@ -718,8 +737,10 @@ PassOneResult passOne(String inputdata) {
         throw 'No such instruction: $instruction';
       }
 
-      if (arg1 != null && replacements.containsKey(arg1)) arg1 = replacements[arg1];
-      if (arg2 != null && replacements.containsKey(arg2)) arg2 = replacements[arg2];
+      if (arg1 != null && replacements.containsKey(arg1))
+        arg1 = replacements[arg1];
+      if (arg2 != null && replacements.containsKey(arg2))
+        arg2 = replacements[arg2];
 
       final bytes = OPTABLE[instruction]!(arg1, arg2, byteOffset, labelTable);
       lt.byteOffset = byteOffset;
@@ -733,7 +754,7 @@ PassOneResult passOne(String inputdata) {
       } else {
         throw 'unknown return type from optable.';
       }
-      
+
       lt.bytes = bytes;
       lineTable.add(lt);
     } catch (err) {
@@ -741,7 +762,8 @@ PassOneResult passOne(String inputdata) {
     }
   }
 
-  return PassOneResult(labels: labelTable, errors: errorTable, lines: lineTable);
+  return PassOneResult(
+      labels: labelTable, errors: errorTable, lines: lineTable);
 }
 
 int elementSize(LineTablePass1 lt) {
@@ -764,13 +786,19 @@ class PassTwoResult {
   final List<LineTable> lines;
   final Map<String, int> labels;
 
-  PassTwoResult({required this.errors, required this.bytes, required this.lines, required this.labels});
+  PassTwoResult(
+      {required this.errors,
+      required this.bytes,
+      required this.lines,
+      required this.labels});
 }
 
 PassTwoResult passTwo(List<LineTablePass1> lineTable, Map<String, int> labels) {
   final errorTable = <String>[];
   final lastElement = lineTable.isNotEmpty ? lineTable.last : null;
-  final byteSize = lastElement != null ? lastElement.byteOffset + elementSize(lastElement) : 0;
+  final byteSize = lastElement != null
+      ? lastElement.byteOffset + elementSize(lastElement)
+      : 0;
   final resultTable = Uint8List(byteSize);
   final finalLines = <LineTable>[];
 
@@ -788,8 +816,10 @@ PassTwoResult passTwo(List<LineTablePass1> lineTable, Map<String, int> labels) {
       }
 
       if (resolvedBytes is String) {
-        resultTable[ltEntry.byteOffset + 1] = int.parse(resolvedBytes.substring(0, 2), radix: 16);
-        resultTable[ltEntry.byteOffset] = int.parse(resolvedBytes.substring(2, 4), radix: 16);
+        resultTable[ltEntry.byteOffset + 1] =
+            int.parse(resolvedBytes.substring(0, 2), radix: 16);
+        resultTable[ltEntry.byteOffset] =
+            int.parse(resolvedBytes.substring(2, 4), radix: 16);
       } else if (resolvedBytes is List<String>) {
         if (resolvedBytes.isEmpty) throw 'Empty array in lineTable.';
         int bi = ltEntry.byteOffset;
@@ -813,7 +843,11 @@ PassTwoResult passTwo(List<LineTablePass1> lineTable, Map<String, int> labels) {
     }
   }
 
-  return PassTwoResult(errors: errorTable, bytes: resultTable, lines: finalLines, labels: labels);
+  return PassTwoResult(
+      errors: errorTable,
+      bytes: resultTable,
+      lines: finalLines,
+      labels: labels);
 }
 
 class AssembleOutput {
@@ -822,7 +856,11 @@ class AssembleOutput {
   final List<LineTable> lines;
   final Map<String, int> labels;
 
-  AssembleOutput({required this.bytes, required this.errors, required this.lines, required this.labels});
+  AssembleOutput(
+      {required this.bytes,
+      required this.errors,
+      required this.lines,
+      required this.labels});
 }
 
 AssembleOutput assemble(String input) {

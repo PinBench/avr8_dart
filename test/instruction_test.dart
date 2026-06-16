@@ -70,7 +70,9 @@ void main() {
       expect(cpu.data[SREG], equals(0));
     });
 
-    test('should execute `ADC r0, r1` instruction when carry is on and the result overflows', () {
+    test(
+        'should execute `ADC r0, r1` instruction when carry is on and the result overflows',
+        () {
       loadProgram(['ADC r0, r1']);
       cpu.data[r0] = 10;
       cpu.data[r1] = 245;
@@ -105,7 +107,9 @@ void main() {
       expect(cpu.data[SREG], equals(SREG_S | SREG_N));
     });
 
-    test('should execute `ADD r0, r1` instruction when carry is on and the result overflows', () {
+    test(
+        'should execute `ADD r0, r1` instruction when carry is on and the result overflows',
+        () {
       loadProgram(['ADD r0, r1']);
       cpu.data[r0] = 11;
       cpu.data[r1] = 245;
@@ -189,7 +193,9 @@ void main() {
       expect(cpu.data[SP], equals(148));
     });
 
-    test('should push 3-byte return address when executing `CALL` instruction on device with >128k flash', () {
+    test(
+        'should push 3-byte return address when executing `CALL` instruction on device with >128k flash',
+        () {
       cpu = CPU(Uint16List(0x20000));
       loadProgram(['CALL 0xb8']);
       cpu.data[SPH] = 0;
@@ -228,7 +234,8 @@ void main() {
       avrInstruction(cpu);
       expect(cpu.pc, equals(1));
       expect(cpu.cycles, equals(1));
-      expect(cpu.data[SREG], equals(SREG_I | SREG_H | SREG_S | SREG_N | SREG_C));
+      expect(
+          cpu.data[SREG], equals(SREG_I | SREG_H | SREG_S | SREG_N | SREG_C));
     });
 
     test('should execute `CPI r26, 0x9` instruction', () {
@@ -258,7 +265,9 @@ void main() {
       expect(cpu.cycles, equals(2));
     });
 
-    test('should execute `CPSE r2, r3` when r2 == r3 and followed by 2-word instruction', () {
+    test(
+        'should execute `CPSE r2, r3` when r2 == r3 and followed by 2-word instruction',
+        () {
       loadProgram(['CPSE r2, r3', 'CALL 8']);
       cpu.data[r2] = 10;
       cpu.data[r3] = 10;
@@ -350,7 +359,9 @@ void main() {
       expect(cpu.data[SP], equals(0x7e));
     });
 
-    test('should push 3-byte return address when executing `ICALL` instruction on device with >128k flash', () {
+    test(
+        'should push 3-byte return address when executing `ICALL` instruction on device with >128k flash',
+        () {
       cpu = CPU(Uint16List(0x20000));
       loadProgram(['ICALL']);
       cpu.data[SPH] = 0;
@@ -658,7 +669,9 @@ void main() {
       expect(cpu.data[SREG], equals(0));
     });
 
-    test('should execute `MUL r5, r6` instruction and update carry flag when numbers are big', () {
+    test(
+        'should execute `MUL r5, r6` instruction and update carry flag when numbers are big',
+        () {
       loadProgram(['MUL r5, r6']);
       cpu.data[r5] = 200;
       cpu.data[r6] = 200;
@@ -775,7 +788,9 @@ void main() {
       expect(cpu.data[SP], equals(0x7e));
     });
 
-    test('should push 3-byte return address when executing `RCALL` instruction on device with >128k flash', () {
+    test(
+        'should push 3-byte return address when executing `RCALL` instruction on device with >128k flash',
+        () {
       cpu = CPU(Uint16List(0x20000));
       loadProgram(['RCALL 6']);
       cpu.data[SPH] = 0;
@@ -855,7 +870,9 @@ void main() {
       expect(cpu.data[SREG], equals(SREG_S | SREG_V | SREG_C));
     });
 
-    test('should execute `SBC r0, r1` instruction when carry is on and result overflows', () {
+    test(
+        'should execute `SBC r0, r1` instruction when carry is on and result overflows',
+        () {
       loadProgram(['SBC r0, r1']);
       cpu.data[r0] = 0;
       cpu.data[r1] = 10;
@@ -874,7 +891,8 @@ void main() {
       avrInstruction(cpu);
       expect(cpu.pc, equals(1));
       expect(cpu.cycles, equals(1));
-      expect(cpu.data[SREG], equals(SREG_I | SREG_H | SREG_S | SREG_N | SREG_C));
+      expect(
+          cpu.data[SREG], equals(SREG_I | SREG_H | SREG_S | SREG_N | SREG_C));
     });
 
     test('should execute `SBI 0x0c, 5`', () {
@@ -902,7 +920,9 @@ void main() {
       expect(cpu.cycles, equals(2));
     });
 
-    test('should execute `SBIS 0x0c, 5` when bit is set and followed by 2-word instruction', () {
+    test(
+        'should execute `SBIS 0x0c, 5` when bit is set and followed by 2-word instruction',
+        () {
       loadProgram(['SBIS 0x0c, 5', 'CALL 0xb8']);
       cpu.data[0x2c] = 0x2F;
       avrInstruction(cpu);

@@ -74,7 +74,8 @@ class AVRSPI {
       enableMask: SPCR_SPIE,
     );
 
-    cpu.writeHooks[config.SPDR] = (int value, int oldValue, int addr, int mask) {
+    cpu.writeHooks[config.SPDR] =
+        (int value, int oldValue, int addr, int mask) {
       if ((cpu.data[config.SPCR] & SPCR_SPE) == 0) {
         // SPI not enabled, ignore write
         return false; // Not handled, or actually in TS it just returned undefined. In our cpu it returns true if handled. Let's return false to allow normal memory write.
@@ -95,12 +96,14 @@ class AVRSPI {
       return true;
     };
 
-    cpu.writeHooks[config.SPCR] = (int value, int oldValue, int addr, int mask) {
+    cpu.writeHooks[config.SPCR] =
+        (int value, int oldValue, int addr, int mask) {
       cpu.updateInterruptEnable(SPI, value);
       return false; // let normal memory update happen
     };
 
-    cpu.writeHooks[config.SPSR] = (int value, int oldValue, int addr, int mask) {
+    cpu.writeHooks[config.SPSR] =
+        (int value, int oldValue, int addr, int mask) {
       cpu.data[config.SPSR] = value;
       cpu.clearInterruptByFlag(SPI, value);
       return true;

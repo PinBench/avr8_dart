@@ -4,13 +4,16 @@ import 'package:avr8_dart/src/cpu/cpu.dart';
 
 void main() {
   group('cpu', () {
-    test('should set initial value of SP to the last byte of internal SRAM', () {
+    test('should set initial value of SP to the last byte of internal SRAM',
+        () {
       final cpu = CPU(Uint16List(1024), sramBytes: 0x1000);
       expect(cpu.SP, equals(0x10ff));
     });
 
     group('events', () {
-      test('should execute queued events after the given number of cycles has passed', () {
+      test(
+          'should execute queued events after the given number of cycles has passed',
+          () {
         final cpu = CPU(Uint16List(1024), sramBytes: 0x1000);
         final events = <List<int>>[];
         for (final i in [1, 4, 10]) {
@@ -20,11 +23,13 @@ void main() {
           cpu.cycles++;
           cpu.tick();
         }
-        expect(events, equals([
-          [1, 1],
-          [4, 4],
-          [10, 10],
-        ]));
+        expect(
+            events,
+            equals([
+              [1, 1],
+              [4, 4],
+              [10, 10],
+            ]));
       });
 
       test('should correctly sort the events when added in reverse order', () {
@@ -37,15 +42,18 @@ void main() {
           cpu.cycles++;
           cpu.tick();
         }
-        expect(events, equals([
-          [1, 1],
-          [4, 4],
-          [10, 10],
-        ]));
+        expect(
+            events,
+            equals([
+              [1, 1],
+              [4, 4],
+              [10, 10],
+            ]));
       });
 
       group('updateClockEvent', () {
-        test('should update the number of cycles for the given clock event', () {
+        test('should update the number of cycles for the given clock event',
+            () {
           final cpu = CPU(Uint16List(1024), sramBytes: 0x1000);
           final events = <List<int>>[];
           final callbacks = <int, AVRClockEventCallback>{};
@@ -60,11 +68,13 @@ void main() {
             cpu.cycles++;
             cpu.tick();
           }
-          expect(events, equals([
-            [4, 2],
-            [10, 10],
-            [1, 12],
-          ]));
+          expect(
+              events,
+              equals([
+                [4, 2],
+                [10, 10],
+                [1, 12],
+              ]));
         });
 
         group('clearClockEvent', () {
@@ -82,13 +92,17 @@ void main() {
               cpu.cycles++;
               cpu.tick();
             }
-            expect(events, equals([
-              [1, 1],
-              [10, 10],
-            ]));
+            expect(
+                events,
+                equals([
+                  [1, 1],
+                  [10, 10],
+                ]));
           });
 
-          test('should return false if the provided clock event is not scheduled', () {
+          test(
+              'should return false if the provided clock event is not scheduled',
+              () {
             final cpu = CPU(Uint16List(1024), sramBytes: 0x1000);
             AVRClockEventCallback event4 = () {};
             cpu.addClockEvent(event4, 4);

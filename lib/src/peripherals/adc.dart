@@ -32,14 +32,16 @@ class ADCMuxInputConstant extends ADCMuxInput {
 
 class ADCMuxInputSingleEnded extends ADCMuxInput {
   final int channel;
-  const ADCMuxInputSingleEnded(this.channel) : super(ADCMuxInputType.SingleEnded);
+  const ADCMuxInputSingleEnded(this.channel)
+      : super(ADCMuxInputType.SingleEnded);
 }
 
 class ADCMuxInputDifferential extends ADCMuxInput {
   final int positiveChannel;
   final int negativeChannel;
   final double gain;
-  const ADCMuxInputDifferential(this.positiveChannel, this.negativeChannel, this.gain)
+  const ADCMuxInputDifferential(
+      this.positiveChannel, this.negativeChannel, this.gain)
       : super(ADCMuxInputType.Differential);
 }
 
@@ -154,7 +156,9 @@ class AVRADC {
       } else if (input is ADCMuxInputSingleEnded) {
         voltage = channelValues[input.channel];
       } else if (input is ADCMuxInputDifferential) {
-        voltage = input.gain * (channelValues[input.positiveChannel] - channelValues[input.negativeChannel]);
+        voltage = input.gain *
+            (channelValues[input.positiveChannel] -
+                channelValues[input.negativeChannel]);
       } else if (input is ADCMuxInputTemperature) {
         voltage = 0.378125; // 25 celcius
       }
@@ -172,7 +176,8 @@ class AVRADC {
       enableMask: ADIE,
     );
 
-    cpu.writeHooks[config.ADCSRA] = (int value, int oldValue, int addr, int mask) {
+    cpu.writeHooks[config.ADCSRA] =
+        (int value, int oldValue, int addr, int mask) {
       if ((value & ADEN) != 0 && (oldValue & ADEN) == 0) {
         conversionCycles = 25;
       }
@@ -237,7 +242,8 @@ class AVRADC {
 
   ADCReference get referenceVoltageType {
     int refs = (cpu.data[config.ADMUX] >> REFS_SHIFT) & REFS_MASK;
-    if (config.adcReferences.length > 4 && (cpu.data[config.ADMUX] & REFS2) != 0) {
+    if (config.adcReferences.length > 4 &&
+        (cpu.data[config.ADMUX] & REFS2) != 0) {
       refs |= 0x4;
     }
     if (refs < config.adcReferences.length) {

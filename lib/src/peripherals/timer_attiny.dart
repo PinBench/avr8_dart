@@ -155,7 +155,8 @@ class ATtinyTimer1 {
       return cpu.data[config.TCNT1] = tcnt & 0xff;
     };
 
-    cpu.writeHooks[config.TCNT1] = (int value, int oldValue, int addr, int mask) {
+    cpu.writeHooks[config.TCNT1] =
+        (int value, int oldValue, int addr, int mask) {
       tcntNext = value;
       countingUp = true;
       tcntUpdated = true;
@@ -166,20 +167,24 @@ class ATtinyTimer1 {
       return false;
     };
 
-    cpu.writeHooks[config.OCR1A] = (int value, int oldValue, int addr, int mask) {
+    cpu.writeHooks[config.OCR1A] =
+        (int value, int oldValue, int addr, int mask) {
       ocrA = value;
       return false;
     };
-    cpu.writeHooks[config.OCR1B] = (int value, int oldValue, int addr, int mask) {
+    cpu.writeHooks[config.OCR1B] =
+        (int value, int oldValue, int addr, int mask) {
       ocrB = value;
       return false;
     };
-    cpu.writeHooks[config.OCR1C] = (int value, int oldValue, int addr, int mask) {
+    cpu.writeHooks[config.OCR1C] =
+        (int value, int oldValue, int addr, int mask) {
       ocrC = value;
       return false;
     };
 
-    cpu.writeHooks[config.TCCR1] = (int value, int oldValue, int addr, int mask) {
+    cpu.writeHooks[config.TCCR1] =
+        (int value, int oldValue, int addr, int mask) {
       cpu.data[config.TCCR1] = value;
       updateDividerFlag = true;
       cpu.clearClockEvent(countEvent);
@@ -189,7 +194,8 @@ class ATtinyTimer1 {
     };
 
     final prevGtccrHook = cpu.writeHooks[config.GTCCR];
-    cpu.writeHooks[config.GTCCR] = (int value, int oldValue, int addr, int mask) {
+    cpu.writeHooks[config.GTCCR] =
+        (int value, int oldValue, int addr, int mask) {
       if ((value & FOC1A) != 0) {
         forceCompare('A');
       }
@@ -212,7 +218,8 @@ class ATtinyTimer1 {
     };
 
     final prevTifrHook = cpu.writeHooks[config.TIFR];
-    cpu.writeHooks[config.TIFR] = (int value, int oldValue, int addr, int mask) {
+    cpu.writeHooks[config.TIFR] =
+        (int value, int oldValue, int addr, int mask) {
       if (prevTifrHook != null) {
         prevTifrHook(value, oldValue, addr, mask);
       } else {
@@ -225,7 +232,8 @@ class ATtinyTimer1 {
     };
 
     final prevTimskHook = cpu.writeHooks[config.TIMSK];
-    cpu.writeHooks[config.TIMSK] = (int value, int oldValue, int addr, int mask) {
+    cpu.writeHooks[config.TIMSK] =
+        (int value, int oldValue, int addr, int mask) {
       if (prevTimskHook != null) {
         prevTimskHook(value, oldValue, addr, mask);
       } else {
@@ -346,13 +354,15 @@ class ATtinyTimer1 {
 
   void timerUpdated(int value, int prevValue) {
     final overflow = prevValue > value;
-    if (((prevValue < ocrA || overflow) && value >= ocrA) || (prevValue < ocrA && overflow)) {
+    if (((prevValue < ocrA || overflow) && value >= ocrA) ||
+        (prevValue < ocrA && overflow)) {
       cpu.setInterruptFlag(OCFA);
       if (comA != 0 && !pwmA) {
         updateCompPinNonPwm('A');
       }
     }
-    if (((prevValue < ocrB || overflow) && value >= ocrB) || (prevValue < ocrB && overflow)) {
+    if (((prevValue < ocrB || overflow) && value >= ocrB) ||
+        (prevValue < ocrB && overflow)) {
       cpu.setInterruptFlag(OCFB);
       if (comB != 0 && !pwmB) {
         updateCompPinNonPwm('B');

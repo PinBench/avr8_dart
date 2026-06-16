@@ -62,13 +62,15 @@ class AVRWatchdog {
       resetWatchdog();
     };
 
-    cpu.writeHooks[config.WDTCSR] = (int value, int oldValue, int addr, int mask) {
+    cpu.writeHooks[config.WDTCSR] =
+        (int value, int oldValue, int addr, int mask) {
       if ((value & WDTCSR_WDCE) != 0 && (value & WDTCSR_WDE) != 0) {
         changeEnabledCycles = cpu.cycles + 4;
         value = value & ~WDTCSR_PROTECT_MASK;
       } else {
         if (cpu.cycles >= changeEnabledCycles) {
-          value = (value & ~WDTCSR_PROTECT_MASK) | (oldValue & WDTCSR_PROTECT_MASK);
+          value =
+              (value & ~WDTCSR_PROTECT_MASK) | (oldValue & WDTCSR_PROTECT_MASK);
         }
         enabledValue = (value & WDTCSR_WDE) != 0 || (value & WDTCSR_WDIE) != 0;
         cpu.data[config.WDTCSR] = value;

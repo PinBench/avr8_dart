@@ -20,7 +20,9 @@ void main() {
       expect(cpu.data[95], equals(0x01)); // SREG: -------C
     });
 
-    test('should push a 3-byte return address when running in 22-bit PC mode (issue #58)', () {
+    test(
+        'should push a 3-byte return address when running in 22-bit PC mode (issue #58)',
+        () {
       final cpu = CPU(Uint16List(0x80000));
       expect(cpu.pc22Bits, isTrue);
 

@@ -86,7 +86,8 @@ void main() {
       expect(cpu.readData(MCUSR), equals(WDRF));
     });
 
-    test('should extend the watchdog timeout when executing a WDR instruction', () {
+    test('should extend the watchdog timeout when executing a WDR instruction',
+        () {
       final asm = asmProgram('''
     ; register addresses
     _REPLACE WDTCSR, $WDTCSR
@@ -127,7 +128,8 @@ void main() {
       expect(cpu.pc, equals(0));
     });
 
-    test('should fire an interrupt when the watchdog expires and WDIE is set', () {
+    test('should fire an interrupt when the watchdog expires and WDIE is set',
+        () {
       final asm = asmProgram('''
     ; register addresses
     _REPLACE WDTCSR, $WDTCSR
