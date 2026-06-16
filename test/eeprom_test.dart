@@ -2,6 +2,7 @@ import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'package:avr8_dart/src/cpu/cpu.dart';
 import 'package:avr8_dart/src/peripherals/eeprom.dart';
+import 'test_utils.dart';
 
 // EEPROM Registers
 const EECR = 0x3f;
@@ -61,7 +62,36 @@ void main() {
         expect(cpu.data[EECR] & EEPE, equals(EEPE));
       });
 
-      // asmProgram tests deferred to Phase 3
+      test('should not erase the memory when writing if EEPM1 is high', () {
+        // We subtract 0x20 to translate from RAM address space to I/O register space
+        final asm = asmProgram('''
+          ; register addresses
+          _REPLACE TWSR, ${EECR - 0x20}
+          _REPLACE EEARL, ${EEARL - 0x20}
+          _REPLACE EEDR, ${EEDR - 0x20}
+          _REPLACE EECR, ${EECR - 0x20}
+
+          LDI r16, 0x55
+          OUT EEDR, r16
+          LDI r16, 9
+          OUT EEARL, r16
+          SBI EECR, 5     ; EECR |= EEPM1
+          SBI EECR, 2     ; EECR |= EEMPE
+          SBI EECR, 1     ; EECR |= EEPE
+        ''');
+
+        final cpu = CPU(asm.program);
+        final eepromBackend = EEPROMMemoryBackend(1024);
+        AVREEPROM(cpu, eepromBackend);
+        eepromBackend.memory[9] = 0x0f; // high four bits are cleared
+
+        final runner = TestProgramRunner(cpu);
+        runner.runInstructions(asm.instructionCount);
+
+        // EEPROM was 0x0f, and our program wrote 0x55.
+        // Since write (without erase) only clears bits, we expect 0x05 now.
+        expect(eepromBackend.memory[9], equals(0x05));
+      });
 
       test('should clear the EEPE bit and fire an interrupt when write has been completed', () {
         final cpu = CPU(Uint16List(0x1000));
@@ -187,6 +217,36 @@ void main() {
         expect(cpu.cycles, equals(10000004));
         expect(eepromBackend.memory[15], equals(0x55));
         expect(eepromBackend.memory[16], equals(0x66));
+      });
+    });
+
+    group('EEPROM erase', () {
+      test('should only erase the memory when EEPM0 is high', () {
+        // We subtract 0x20 to translate from RAM address space to I/O register space
+        final asm = asmProgram('''
+            ; register addresses
+            _REPLACE EEARL, ${EEARL - 0x20}
+            _REPLACE EEDR, ${EEDR - 0x20}
+            _REPLACE EECR, ${EECR - 0x20}
+
+            LDI r16, 0x55
+            OUT EEDR, r16
+            LDI r16, 9
+            OUT EEARL, r16
+            SBI EECR, 4     ; EECR |= EEPM0
+            SBI EECR, 2     ; EECR |= EEMPE
+            SBI EECR, 1     ; EECR |= EEPE
+          ''');
+
+        final cpu = CPU(asm.program);
+        final eepromBackend = EEPROMMemoryBackend(1024);
+        AVREEPROM(cpu, eepromBackend);
+        eepromBackend.memory[9] = 0x22;
+
+        final runner = TestProgramRunner(cpu);
+        runner.runInstructions(asm.instructionCount);
+
+        expect(eepromBackend.memory[9], equals(0xff));
       });
     });
   });

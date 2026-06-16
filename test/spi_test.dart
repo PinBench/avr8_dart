@@ -2,6 +2,10 @@ import 'dart:typed_data';
 import 'package:test/test.dart';
 import 'package:avr8_dart/src/cpu/cpu.dart';
 import 'package:avr8_dart/src/peripherals/spi.dart';
+import 'test_utils.dart';
+
+const R16 = 16;
+const R17 = 17;
 
 const FREQ_16MHZ = 16000000;
 
@@ -124,7 +128,59 @@ void main() {
       expect(callCount, equals(0));
     });
 
-    // Integration test relying on asmProgram omitted and deferred to Phase 3.
+    test('should transmit a byte successfully (integration)', () {
+      // Based on code example from section 19.2 of the datasheet, page 172
+      final asm = asmProgram('''
+      ; register addresses
+      _REPLACE SPCR, ${SPCR - 0x20}
+      _REPLACE SPDR, ${SPDR - 0x20}
+      _REPLACE SPSR, ${SPSR - 0x20}
+      _REPLACE DDR_SPI, 0x4 ; PORTB
+
+      SPI_MasterInit:
+        ; Set MOSI and SCK output, all others input
+        LDI r17, 0x28
+        OUT DDR_SPI, r17
+    
+        ; Enable SPI, Master, set clock rate fck/16
+        LDI r17, 0x51   ; (1<<SPE)|(1<<MSTR)|(1<<SPR0)
+        OUT SPCR, r17
+
+      SPI_MasterTransmit:
+        LDI r16, 0xb8 ; byte to transmit
+        OUT SPDR, r16
+
+      Wait_Transmit:
+        IN r16, SPSR
+        SBRS r16, 7
+        RJMP Wait_Transmit
+      
+      ; Now read the result into r17
+        IN r17, SPDR
+        BREAK
+    ''');
+
+      final cpu = CPU(asm.program);
+      final spi = AVRSPI(cpu, spiConfig, FREQ_16MHZ);
+
+      int? byteReceivedFromAsmCode;
+
+      spi.onByte = (value) {
+        byteReceivedFromAsmCode = value;
+        cpu.addClockEvent(() => spi.completeTransfer(0x5b), spi.transferCycles);
+      };
+
+      final runner = TestProgramRunner(cpu, (cpu) {
+        /* do nothing on break */
+      });
+      runner.runToBreak();
+
+      // 16 cycles per clock * 8 bits = 128
+      expect(cpu.cycles, greaterThanOrEqualTo(128));
+
+      expect(byteReceivedFromAsmCode, equals(0xb8));
+      expect(cpu.data[R17], equals(0x5b));
+    });
 
     test('should set the WCOL bit in SPSR if writing to SPDR while SPI is already transmitting', () {
       final cpu = CPU(Uint16List(1024));

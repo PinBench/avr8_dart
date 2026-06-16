@@ -655,7 +655,7 @@ void avrInstruction(CPU cpu) {
     }
   } else if ((opcode & 0xfe08) == 0xfe00) {
     /* SBRS, 1111 111r rrrr 0bbb */
-    if ((cpu.data[(opcode & 0x1f0) >> 4] & (1 << (opcode & 7))) == 0) {
+    if ((cpu.data[(opcode & 0x1f0) >> 4] & (1 << (opcode & 7))) != 0) {
       final int nextOpcode = cpu.progMem[cpu.pc + 1];
       final int skipSize = isTwoWordInstruction(nextOpcode) ? 2 : 1;
       cpu.cycles += skipSize;
