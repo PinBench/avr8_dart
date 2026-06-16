@@ -75,7 +75,7 @@ dart test
 
 `avr8_dart` is fully functional and covers the complete `ATmega328p` (Arduino Uno) simulation architecture. It also supports `ATtiny85` hardware configurations. 
 
-See the [CHANGELOG.md](CHANGELOG.md) and [VERSION.md](VERSION.md) for detailed reference version tracking.
+See the [CHANGELOG.md](CHANGELOG.md) for detailed reference version tracking.
 
 ## Acknowledgements
 
