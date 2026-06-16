@@ -1,0 +1,3 @@
+# Pub package ignore file
+# Ignore the typescript reference repository
+reference/

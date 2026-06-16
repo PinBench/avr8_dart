@@ -1,6 +1,7 @@
 name: avr8_dart
-description: A Dart port of the avr8js AVR emulator.
+description: A Dart library that implements the AVR 8-bit architecture, enabling simulation of Arduino and ATmega microcontrollers.
 version: 0.1.0
+repository: https://github.com/burhankhanzada/avr8_dart
 environment:
   sdk: ">=3.0.0 <4.0.0"
 
