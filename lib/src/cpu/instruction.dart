@@ -28,816 +28,951 @@ bool isTwoWordInstruction(int opcode) {
           (opcode & 0xfe0e) == 0x940c);
 }
 
+/// Which case of [avrInstruction] each of the 65536 opcodes runs, 0 for none.
+///
+/// Built once from [_decode], which tests an opcode against the same masks,
+/// in the same order, as the if-chain this replaced (avr8js's), so every
+/// opcode still runs exactly the case it always did. Looking the answer up
+/// instead of re-testing up to 110 masks on every instruction is most of what
+/// makes the CPU fast; see `CPU.decodeTable`.
+final Uint8List avrDecodeTable = _buildDecodeTable();
+
+Uint8List _buildDecodeTable() {
+  final table = Uint8List(0x10000);
+  for (var opcode = 0; opcode < 0x10000; opcode++) {
+    table[opcode] = _decode(opcode);
+  }
+  return table;
+}
+
+int _decode(int opcode) {
+  if ((opcode & 0xfc00) == 0x1c00) return 1; // ADC
+  if ((opcode & 0xfc00) == 0xc00) return 2; // ADD
+  if ((opcode & 0xff00) == 0x9600) return 3; // ADIW
+  if ((opcode & 0xfc00) == 0x2000) return 4; // AND
+  if ((opcode & 0xf000) == 0x7000) return 5; // ANDI
+  if ((opcode & 0xfe0f) == 0x9405) return 6; // ASR
+  if ((opcode & 0xff8f) == 0x9488) return 7; // BCLR
+  if ((opcode & 0xfe08) == 0xf800) return 8; // BLD
+  if ((opcode & 0xfc00) == 0xf400) return 9; // BRBC
+  if ((opcode & 0xfc00) == 0xf000) return 10; // BRBS
+  if ((opcode & 0xff8f) == 0x9408) return 11; // BSET
+  if ((opcode & 0xfe08) == 0xfa00) return 12; // BST
+  if ((opcode & 0xfe0e) == 0x940e) return 13; // CALL
+  if ((opcode & 0xff00) == 0x9800) return 14; // CBI
+  if ((opcode & 0xfe0f) == 0x9400) return 15; // COM
+  if ((opcode & 0xfc00) == 0x1400) return 16; // CP
+  if ((opcode & 0xfc00) == 0x400) return 17; // CPC
+  if ((opcode & 0xf000) == 0x3000) return 18; // CPI
+  if ((opcode & 0xfc00) == 0x1000) return 19; // CPSE
+  if ((opcode & 0xfe0f) == 0x940a) return 20; // DEC
+  if (opcode == 0x9519) return 21; // EICALL
+  if (opcode == 0x9419) return 22; // EIJMP
+  if (opcode == 0x95d8) return 23; // ELPM
+  if ((opcode & 0xfe0f) == 0x9006) return 24; // ELPM(REG)
+  if ((opcode & 0xfe0f) == 0x9007) return 25; // ELPM(INC)
+  if ((opcode & 0xfc00) == 0x2400) return 26; // EOR
+  if ((opcode & 0xff88) == 0x308) return 27; // FMUL
+  if ((opcode & 0xff88) == 0x380) return 28; // FMULS
+  if ((opcode & 0xff88) == 0x388) return 29; // FMULSU
+  if (opcode == 0x9509) return 30; // ICALL
+  if (opcode == 0x9409) return 31; // IJMP
+  if ((opcode & 0xf800) == 0xb000) return 32; // IN
+  if ((opcode & 0xfe0f) == 0x9403) return 33; // INC
+  if ((opcode & 0xfe0e) == 0x940c) return 34; // JMP
+  if ((opcode & 0xfe0f) == 0x9206) return 35; // LAC
+  if ((opcode & 0xfe0f) == 0x9205) return 36; // LAS
+  if ((opcode & 0xfe0f) == 0x9207) return 37; // LAT
+  if ((opcode & 0xf000) == 0xe000) return 38; // LDI
+  if ((opcode & 0xfe0f) == 0x9000) return 39; // LDS
+  if ((opcode & 0xfe0f) == 0x900c) return 40; // LDX
+  if ((opcode & 0xfe0f) == 0x900d) return 41; // LDX(INC)
+  if ((opcode & 0xfe0f) == 0x900e) return 42; // LDX(DEC)
+  if ((opcode & 0xfe0f) == 0x8008) return 43; // LDY
+  if ((opcode & 0xfe0f) == 0x9009) return 44; // LDY(INC)
+  if ((opcode & 0xfe0f) == 0x900a) return 45; // LDY(DEC)
+  if ((opcode & 0xd208) == 0x8008 &&
+      ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)) != 0)
+    return 46; // LDDY
+  if ((opcode & 0xfe0f) == 0x8000) return 47; // LDZ
+  if ((opcode & 0xfe0f) == 0x9001) return 48; // LDZ(INC)
+  if ((opcode & 0xfe0f) == 0x9002) return 49; // LDZ(DEC)
+  if ((opcode & 0xd208) == 0x8000 &&
+      ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)) != 0)
+    return 50; // LDDZ
+  if (opcode == 0x95c8) return 51; // LPM
+  if ((opcode & 0xfe0f) == 0x9004) return 52; // LPM(REG)
+  if ((opcode & 0xfe0f) == 0x9005) return 53; // LPM(INC)
+  if ((opcode & 0xfe0f) == 0x9406) return 54; // LSR
+  if ((opcode & 0xfc00) == 0x2c00) return 55; // MOV
+  if ((opcode & 0xff00) == 0x100) return 56; // MOVW
+  if ((opcode & 0xfc00) == 0x9c00) return 57; // MUL
+  if ((opcode & 0xff00) == 0x200) return 58; // MULS
+  if ((opcode & 0xff88) == 0x300) return 59; // MULSU
+  if ((opcode & 0xfe0f) == 0x9401) return 60; // NEG
+  if (opcode == 0) return 61; // NOP
+  if ((opcode & 0xfc00) == 0x2800) return 62; // OR
+  if ((opcode & 0xf000) == 0x6000) return 63; // SBR
+  if ((opcode & 0xf800) == 0xb800) return 64; // OUT
+  if ((opcode & 0xfe0f) == 0x900f) return 65; // POP
+  if ((opcode & 0xfe0f) == 0x920f) return 66; // PUSH
+  if ((opcode & 0xf000) == 0xd000) return 67; // RCALL
+  if (opcode == 0x9508) return 68; // RET
+  if (opcode == 0x9518) return 69; // RETI
+  if ((opcode & 0xf000) == 0xc000) return 70; // RJMP
+  if ((opcode & 0xfe0f) == 0x9407) return 71; // ROR
+  if ((opcode & 0xfc00) == 0x800) return 72; // SBC
+  if ((opcode & 0xf000) == 0x4000) return 73; // SBCI
+  if ((opcode & 0xff00) == 0x9a00) return 74; // SBI
+  if ((opcode & 0xff00) == 0x9900) return 75; // SBIC
+  if ((opcode & 0xff00) == 0x9b00) return 76; // SBIS
+  if ((opcode & 0xff00) == 0x9700) return 77; // SBIW
+  if ((opcode & 0xfe08) == 0xfc00) return 78; // SBRC
+  if ((opcode & 0xfe08) == 0xfe00) return 79; // SBRS
+  if (opcode == 0x9588) return 80; // SLEEP
+  if (opcode == 0x95e8) return 81; // SPM
+  if (opcode == 0x95f8) return 82; // SPM(INC)
+  if ((opcode & 0xfe0f) == 0x9200) return 83; // STS
+  if ((opcode & 0xfe0f) == 0x920c) return 84; // STX
+  if ((opcode & 0xfe0f) == 0x920d) return 85; // STX(INC)
+  if ((opcode & 0xfe0f) == 0x920e) return 86; // STX(DEC)
+  if ((opcode & 0xfe0f) == 0x8208) return 87; // STY
+  if ((opcode & 0xfe0f) == 0x9209) return 88; // STY(INC)
+  if ((opcode & 0xfe0f) == 0x920a) return 89; // STY(DEC)
+  if ((opcode & 0xd208) == 0x8208 &&
+      ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)) != 0)
+    return 90; // STDY
+  if ((opcode & 0xfe0f) == 0x8200) return 91; // STZ
+  if ((opcode & 0xfe0f) == 0x9201) return 92; // STZ(INC)
+  if ((opcode & 0xfe0f) == 0x9202) return 93; // STZ(DEC)
+  if ((opcode & 0xd208) == 0x8200 &&
+      ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)) != 0)
+    return 94; // STDZ
+  if ((opcode & 0xfc00) == 0x1800) return 95; // SUB
+  if ((opcode & 0xf000) == 0x5000) return 96; // SUBI
+  if ((opcode & 0xfe0f) == 0x9402) return 97; // SWAP
+  if (opcode == 0x95a8) return 98; // WDR
+  if ((opcode & 0xfe0f) == 0x9204) return 99; // XCH
+  return 0;
+}
+
 void avrInstruction(CPU cpu) {
   final int opcode = cpu.progMem[cpu.pc];
-
-  if ((opcode & 0xfc00) == 0x1c00) {
-    /* ADC, 0001 11rd dddd rrrr */
-    final int d = cpu.data[(opcode & 0x1f0) >> 4];
-    final int r = cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
-    final int sum = (d + r + (cpu.data[95] & 1)).toInt();
-    final int R = sum & 255;
-    cpu.data[(opcode & 0x1f0) >> 4] = R;
-    int sreg = cpu.data[95] & 0xc0;
-    sreg |= ((R) != 0) ? 0 : 2;
-    sreg |= ((128 & R) != 0) ? 4 : 0;
-    sreg |= (((R ^ r) & (d ^ R) & 128) != 0) ? 8 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= ((sum & 256) != 0) ? 1 : 0;
-    sreg |= ((1 & ((d & r) | (r & ~R) | (~R & d))) != 0) ? 0x20 : 0;
-    cpu.data[95] = sreg;
-  } else if ((opcode & 0xfc00) == 0xc00) {
-    /* ADD, 0000 11rd dddd rrrr */
-    final int d = cpu.data[(opcode & 0x1f0) >> 4];
-    final int r = cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
-    final int R = (d + r) & 255;
-    cpu.data[(opcode & 0x1f0) >> 4] = R;
-    int sreg = cpu.data[95] & 0xc0;
-    sreg |= ((R) != 0) ? 0 : 2;
-    sreg |= ((128 & R) != 0) ? 4 : 0;
-    sreg |= (((R ^ r) & (R ^ d) & 128) != 0) ? 8 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= (((d + r) & 256) != 0) ? 1 : 0;
-    sreg |= ((1 & ((d & r) | (r & ~R) | (~R & d))) != 0) ? 0x20 : 0;
-    cpu.data[95] = sreg;
-  } else if ((opcode & 0xff00) == 0x9600) {
-    /* ADIW, 1001 0110 KKdd KKKK */
-    final int addr = 2 * ((opcode & 0x30) >> 4) + 24;
-    final int value = cpu.dataView.getUint16(addr, Endian.little);
-    final int R = (value + ((opcode & 0xf) | ((opcode & 0xc0) >> 2))) & 0xffff;
-    cpu.dataView.setUint16(addr, R, Endian.little);
-    int sreg = cpu.data[95] & 0xe0;
-    sreg |= ((R) != 0) ? 0 : 2;
-    sreg |= ((0x8000 & R) != 0) ? 4 : 0;
-    sreg |= ((~value & R & 0x8000) != 0) ? 8 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= ((~R & value & 0x8000) != 0) ? 1 : 0;
-    cpu.data[95] = sreg;
-    cpu.cycles++;
-  } else if ((opcode & 0xfc00) == 0x2000) {
-    /* AND, 0010 00rd dddd rrrr */
-    final int R = cpu.data[(opcode & 0x1f0) >> 4] &
-        cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
-    cpu.data[(opcode & 0x1f0) >> 4] = R;
-    int sreg = cpu.data[95] & 0xe1;
-    sreg |= ((R) != 0) ? 0 : 2;
-    sreg |= ((128 & R) != 0) ? 4 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    cpu.data[95] = sreg;
-  } else if ((opcode & 0xf000) == 0x7000) {
-    /* ANDI, 0111 KKKK dddd KKKK */
-    final int R = cpu.data[((opcode & 0xf0) >> 4) + 16] &
-        ((opcode & 0xf) | ((opcode & 0xf00) >> 4));
-    cpu.data[((opcode & 0xf0) >> 4) + 16] = R;
-    int sreg = cpu.data[95] & 0xe1;
-    sreg |= ((R) != 0) ? 0 : 2;
-    sreg |= ((128 & R) != 0) ? 4 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    cpu.data[95] = sreg;
-  } else if ((opcode & 0xfe0f) == 0x9405) {
-    /* ASR, 1001 010d dddd 0101 */
-    final int value = cpu.data[(opcode & 0x1f0) >> 4];
-    final int R = (value >>> 1) | (128 & value);
-    cpu.data[(opcode & 0x1f0) >> 4] = R;
-    int sreg = cpu.data[95] & 0xe0;
-    sreg |= ((R) != 0) ? 0 : 2;
-    sreg |= ((128 & R) != 0) ? 4 : 0;
-    sreg |= value & 1;
-    sreg |= (((sreg >> 2) & 1) ^ (sreg & 1)) != 0 ? 8 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    cpu.data[95] = sreg;
-  } else if ((opcode & 0xff8f) == 0x9488) {
-    /* BCLR, 1001 0100 1sss 1000 */
-    cpu.data[95] &= ~(1 << ((opcode & 0x70) >> 4));
-  } else if ((opcode & 0xfe08) == 0xf800) {
-    /* BLD, 1111 100d dddd 0bbb */
-    final int b = opcode & 7;
-    final int d = (opcode & 0x1f0) >> 4;
-    cpu.data[d] = (~(1 << b) & cpu.data[d]) | (((cpu.data[95] >> 6) & 1) << b);
-  } else if ((opcode & 0xfc00) == 0xf400) {
-    /* BRBC, 1111 01kk kkkk ksss */
-    if ((cpu.data[95] & (1 << (opcode & 7))) == 0) {
-      cpu.pc = cpu.pc +
-          (((opcode & 0x1f8) >> 3) - ((opcode & 0x200) != 0 ? 0x40 : 0));
+  switch (cpu.decodeTable[opcode]) {
+    case 1:
+      /* ADC, 0001 11rd dddd rrrr */
+      final int d = cpu.data[(opcode & 0x1f0) >> 4];
+      final int r = cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
+      final int sum = (d + r + (cpu.data[95] & 1)).toInt();
+      final int R = sum & 255;
+      cpu.data[(opcode & 0x1f0) >> 4] = R;
+      int sreg = cpu.data[95] & 0xc0;
+      sreg |= ((R) != 0) ? 0 : 2;
+      sreg |= ((128 & R) != 0) ? 4 : 0;
+      sreg |= (((R ^ r) & (d ^ R) & 128) != 0) ? 8 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
+      sreg |= ((sum & 256) != 0) ? 1 : 0;
+      sreg |= ((1 & ((d & r) | (r & ~R) | (~R & d))) != 0) ? 0x20 : 0;
+      cpu.data[95] = sreg;
+    case 2:
+      /* ADD, 0000 11rd dddd rrrr */
+      final int d = cpu.data[(opcode & 0x1f0) >> 4];
+      final int r = cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
+      final int R = (d + r) & 255;
+      cpu.data[(opcode & 0x1f0) >> 4] = R;
+      int sreg = cpu.data[95] & 0xc0;
+      sreg |= ((R) != 0) ? 0 : 2;
+      sreg |= ((128 & R) != 0) ? 4 : 0;
+      sreg |= (((R ^ r) & (R ^ d) & 128) != 0) ? 8 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
+      sreg |= (((d + r) & 256) != 0) ? 1 : 0;
+      sreg |= ((1 & ((d & r) | (r & ~R) | (~R & d))) != 0) ? 0x20 : 0;
+      cpu.data[95] = sreg;
+    case 3:
+      /* ADIW, 1001 0110 KKdd KKKK */
+      final int addr = 2 * ((opcode & 0x30) >> 4) + 24;
+      final int value = cpu.dataView.getUint16(addr, Endian.little);
+      final int R =
+          (value + ((opcode & 0xf) | ((opcode & 0xc0) >> 2))) & 0xffff;
+      cpu.dataView.setUint16(addr, R, Endian.little);
+      int sreg = cpu.data[95] & 0xe0;
+      sreg |= ((R) != 0) ? 0 : 2;
+      sreg |= ((0x8000 & R) != 0) ? 4 : 0;
+      sreg |= ((~value & R & 0x8000) != 0) ? 8 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
+      sreg |= ((~R & value & 0x8000) != 0) ? 1 : 0;
+      cpu.data[95] = sreg;
       cpu.cycles++;
-    }
-  } else if ((opcode & 0xfc00) == 0xf000) {
-    /* BRBS, 1111 00kk kkkk ksss */
-    if ((cpu.data[95] & (1 << (opcode & 7))) != 0) {
-      cpu.pc = cpu.pc +
-          (((opcode & 0x1f8) >> 3) - ((opcode & 0x200) != 0 ? 0x40 : 0));
-      cpu.cycles++;
-    }
-  } else if ((opcode & 0xff8f) == 0x9408) {
-    /* BSET, 1001 0100 0sss 1000 */
-    cpu.data[95] |= 1 << ((opcode & 0x70) >> 4);
-  } else if ((opcode & 0xfe08) == 0xfa00) {
-    /* BST, 1111 101d dddd 0bbb */
-    final int d = cpu.data[(opcode & 0x1f0) >> 4];
-    final int b = opcode & 7;
-    cpu.data[95] = (cpu.data[95] & 0xbf) | (((d >> b) & 1) != 0 ? 0x40 : 0);
-  } else if ((opcode & 0xfe0e) == 0x940e) {
-    /* CALL, 1001 010k kkkk 111k kkkk kkkk kkkk kkkk */
-    final int k = cpu.progMem[cpu.pc + 1] |
-        ((opcode & 1) << 16) |
-        ((opcode & 0x1f0) << 13);
-    final int ret = cpu.pc + 2;
-    final int sp = cpu.dataView.getUint16(93, Endian.little);
-    final bool pc22Bits = cpu.pc22Bits;
-    cpu.data[sp] = 255 & ret;
-    cpu.data[sp - 1] = (ret >> 8) & 255;
-    if (pc22Bits) {
-      cpu.data[sp - 2] = (ret >> 16) & 255;
-    }
-    cpu.dataView.setUint16(93, sp - (pc22Bits ? 3 : 2), Endian.little);
-    cpu.pc = k - 1;
-    cpu.cycles += pc22Bits ? 4 : 3;
-  } else if ((opcode & 0xff00) == 0x9800) {
-    /* CBI, 1001 1000 AAAA Abbb */
-    final int A = opcode & 0xf8;
-    final int b = opcode & 7;
-    final int R = cpu.readData((A >> 3) + 32);
-    final int mask = 1 << b;
-    cpu.writeData((A >> 3) + 32, R & ~mask, mask);
-  } else if ((opcode & 0xfe0f) == 0x9400) {
-    /* COM, 1001 010d dddd 0000 */
-    final int d = (opcode & 0x1f0) >> 4;
-    final int R = (255 - cpu.data[d]).toInt();
-    cpu.data[d] = R;
-    int sreg = (cpu.data[95] & 0xe1) | 1;
-    sreg |= ((R) != 0) ? 0 : 2;
-    sreg |= ((128 & R) != 0) ? 4 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    cpu.data[95] = sreg;
-  } else if ((opcode & 0xfc00) == 0x1400) {
-    /* CP, 0001 01rd dddd rrrr */
-    final int val1 = cpu.data[(opcode & 0x1f0) >> 4];
-    final int val2 = cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
-    final int R = val1 - val2;
-    int sreg = cpu.data[95] & 0xc0;
-    sreg |= ((R) != 0) ? 0 : 2;
-    sreg |= ((128 & R) != 0) ? 4 : 0;
-    sreg |= (0 != ((val1 ^ val2) & (val1 ^ R) & 128)) != 0 ? 8 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= (val2 > val1) ? 1 : 0;
-    sreg |= ((1 & ((~val1 & val2) | (val2 & R) | (R & ~val1))) != 0) ? 0x20 : 0;
-    cpu.data[95] = sreg;
-  } else if ((opcode & 0xfc00) == 0x400) {
-    /* CPC, 0000 01rd dddd rrrr */
-    final int arg1 = cpu.data[(opcode & 0x1f0) >> 4];
-    final int arg2 = cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
-    int sreg = cpu.data[95];
-    final int r = arg1 - arg2 - (sreg & 1);
-    sreg = (sreg & 0xc0) |
-        (r == 0 && ((sreg >> 1) & 1) != 0 ? 2 : 0) |
-        (arg2 + (sreg & 1) > arg1 ? 1 : 0);
-    sreg |= ((128 & r) != 0) ? 4 : 0;
-    sreg |= (((arg1 ^ arg2) & (arg1 ^ r) & 128) != 0) ? 8 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= ((1 & ((~arg1 & arg2) | (arg2 & r) | (r & ~arg1))) != 0) ? 0x20 : 0;
-    cpu.data[95] = sreg;
-  } else if ((opcode & 0xf000) == 0x3000) {
-    /* CPI, 0011 KKKK dddd KKKK */
-    final int arg1 = cpu.data[((opcode & 0xf0) >> 4) + 16];
-    final int arg2 = (opcode & 0xf) | ((opcode & 0xf00) >> 4);
-    final int r = arg1 - arg2;
-    int sreg = cpu.data[95] & 0xc0;
-    sreg |= ((r) != 0) ? 0 : 2;
-    sreg |= ((128 & r) != 0) ? 4 : 0;
-    sreg |= (((arg1 ^ arg2) & (arg1 ^ r) & 128) != 0) ? 8 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= (arg2 > arg1) ? 1 : 0;
-    sreg |= ((1 & ((~arg1 & arg2) | (arg2 & r) | (r & ~arg1))) != 0) ? 0x20 : 0;
-    cpu.data[95] = sreg;
-  } else if ((opcode & 0xfc00) == 0x1000) {
-    /* CPSE, 0001 00rd dddd rrrr */
-    if (cpu.data[(opcode & 0x1f0) >> 4] ==
-        cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)]) {
-      final int nextOpcode = cpu.progMem[cpu.pc + 1];
-      final int skipSize = isTwoWordInstruction(nextOpcode) ? 2 : 1;
-      cpu.pc += skipSize;
-      cpu.cycles += skipSize;
-    }
-  } else if ((opcode & 0xfe0f) == 0x940a) {
-    /* DEC, 1001 010d dddd 1010 */
-    final int value = cpu.data[(opcode & 0x1f0) >> 4];
-    final int R = value - 1;
-    cpu.data[(opcode & 0x1f0) >> 4] = R;
-    int sreg = cpu.data[95] & 0xe1;
-    sreg |= ((R) != 0) ? 0 : 2;
-    sreg |= ((128 & R) != 0) ? 4 : 0;
-    sreg |= (128 == value) != 0 ? 8 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    cpu.data[95] = sreg;
-  } else if (opcode == 0x9519) {
-    /* EICALL, 1001 0101 0001 1001 */
-    final int retAddr = cpu.pc + 1;
-    final int sp = cpu.dataView.getUint16(93, Endian.little);
-    final int eind = cpu.data[0x5c];
-    cpu.data[sp] = retAddr & 255;
-    cpu.data[sp - 1] = (retAddr >> 8) & 255;
-    cpu.data[sp - 2] = (retAddr >> 16) & 255;
-    cpu.dataView.setUint16(93, sp - 3, Endian.little);
-    cpu.pc = ((eind << 16) | cpu.dataView.getUint16(30, Endian.little)) - 1;
-    cpu.cycles += 3;
-  } else if (opcode == 0x9419) {
-    /* EIJMP, 1001 0100 0001 1001 */
-    final int eind = cpu.data[0x5c];
-    cpu.pc = ((eind << 16) | cpu.dataView.getUint16(30, Endian.little)) - 1;
-    cpu.cycles++;
-  } else if (opcode == 0x95d8) {
-    /* ELPM, 1001 0101 1101 1000 */
-    final int rampz = cpu.data[0x5b];
-    cpu.data[0] = cpu
-        .progBytes[(rampz << 16) | cpu.dataView.getUint16(30, Endian.little)];
-    cpu.cycles += 2;
-  } else if ((opcode & 0xfe0f) == 0x9006) {
-    /* ELPM(REG), 1001 000d dddd 0110 */
-    final int rampz = cpu.data[0x5b];
-    cpu.data[(opcode & 0x1f0) >> 4] = cpu
-        .progBytes[(rampz << 16) | cpu.dataView.getUint16(30, Endian.little)];
-    cpu.cycles += 2;
-  } else if ((opcode & 0xfe0f) == 0x9007) {
-    /* ELPM(INC), 1001 000d dddd 0111 */
-    final int rampz = cpu.data[0x5b];
-    final int i = cpu.dataView.getUint16(30, Endian.little);
-    cpu.data[(opcode & 0x1f0) >> 4] = cpu.progBytes[(rampz << 16) | i];
-    cpu.dataView.setUint16(30, i + 1, Endian.little);
-    if (i == 0xffff) {
-      cpu.data[0x5b] = (rampz + 1) % (cpu.progBytes.length >> 16);
-    }
-    cpu.cycles += 2;
-  } else if ((opcode & 0xfc00) == 0x2400) {
-    /* EOR, 0010 01rd dddd rrrr */
-    final int R = cpu.data[(opcode & 0x1f0) >> 4] ^
-        cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
-    cpu.data[(opcode & 0x1f0) >> 4] = R;
-    int sreg = cpu.data[95] & 0xe1;
-    sreg |= ((R) != 0) ? 0 : 2;
-    sreg |= ((128 & R) != 0) ? 4 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    cpu.data[95] = sreg;
-  } else if ((opcode & 0xff88) == 0x308) {
-    /* FMUL, 0000 0011 0ddd 1rrr */
-    final int v1 = cpu.data[((opcode & 0x70) >> 4) + 16];
-    final int v2 = cpu.data[(opcode & 7) + 16];
-    final int R = (v1 * v2) << 1;
-    cpu.dataView.setUint16(0, R, Endian.little);
-    cpu.data[95] = (cpu.data[95] & 0xfc) |
-        ((0xffff & R) != 0 ? 0 : 2) |
-        (((v1 * v2) & 0x8000) != 0 ? 1 : 0);
-    cpu.cycles++;
-  } else if ((opcode & 0xff88) == 0x380) {
-    /* FMULS, 0000 0011 1ddd 0rrr */
-    final int v1 = cpu.dataView.getInt8(((opcode & 0x70) >> 4) + 16);
-    final int v2 = cpu.dataView.getInt8((opcode & 7) + 16);
-    final int R = (v1 * v2) << 1;
-    cpu.dataView.setInt16(0, R, Endian.little);
-    cpu.data[95] = (cpu.data[95] & 0xfc) |
-        ((0xffff & R) != 0 ? 0 : 2) |
-        (((v1 * v2) & 0x8000) != 0 ? 1 : 0);
-    cpu.cycles++;
-  } else if ((opcode & 0xff88) == 0x388) {
-    /* FMULSU, 0000 0011 1ddd 1rrr */
-    final int v1 = cpu.dataView.getInt8(((opcode & 0x70) >> 4) + 16);
-    final int v2 = cpu.data[(opcode & 7) + 16];
-    final int R = (v1 * v2) << 1;
-    cpu.dataView.setInt16(0, R, Endian.little);
-    cpu.data[95] = (cpu.data[95] & 0xfc) |
-        ((0xffff & R) != 0 ? 2 : 0) |
-        (((v1 * v2) & 0x8000) != 0 ? 1 : 0);
-    cpu.cycles++;
-  } else if (opcode == 0x9509) {
-    /* ICALL, 1001 0101 0000 1001 */
-    final int retAddr = cpu.pc + 1;
-    final int sp = cpu.dataView.getUint16(93, Endian.little);
-    final bool pc22Bits = cpu.pc22Bits;
-    cpu.data[sp] = retAddr & 255;
-    cpu.data[sp - 1] = (retAddr >> 8) & 255;
-    if (pc22Bits) {
+    case 4:
+      /* AND, 0010 00rd dddd rrrr */
+      final int R = cpu.data[(opcode & 0x1f0) >> 4] &
+          cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
+      cpu.data[(opcode & 0x1f0) >> 4] = R;
+      int sreg = cpu.data[95] & 0xe1;
+      sreg |= ((R) != 0) ? 0 : 2;
+      sreg |= ((128 & R) != 0) ? 4 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
+      cpu.data[95] = sreg;
+    case 5:
+      /* ANDI, 0111 KKKK dddd KKKK */
+      final int R = cpu.data[((opcode & 0xf0) >> 4) + 16] &
+          ((opcode & 0xf) | ((opcode & 0xf00) >> 4));
+      cpu.data[((opcode & 0xf0) >> 4) + 16] = R;
+      int sreg = cpu.data[95] & 0xe1;
+      sreg |= ((R) != 0) ? 0 : 2;
+      sreg |= ((128 & R) != 0) ? 4 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
+      cpu.data[95] = sreg;
+    case 6:
+      /* ASR, 1001 010d dddd 0101 */
+      final int value = cpu.data[(opcode & 0x1f0) >> 4];
+      final int R = (value >>> 1) | (128 & value);
+      cpu.data[(opcode & 0x1f0) >> 4] = R;
+      int sreg = cpu.data[95] & 0xe0;
+      sreg |= ((R) != 0) ? 0 : 2;
+      sreg |= ((128 & R) != 0) ? 4 : 0;
+      sreg |= value & 1;
+      sreg |= (((sreg >> 2) & 1) ^ (sreg & 1)) != 0 ? 8 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
+      cpu.data[95] = sreg;
+    case 7:
+      /* BCLR, 1001 0100 1sss 1000 */
+      cpu.data[95] &= ~(1 << ((opcode & 0x70) >> 4));
+    case 8:
+      /* BLD, 1111 100d dddd 0bbb */
+      final int b = opcode & 7;
+      final int d = (opcode & 0x1f0) >> 4;
+      cpu.data[d] =
+          (~(1 << b) & cpu.data[d]) | (((cpu.data[95] >> 6) & 1) << b);
+    case 9:
+      /* BRBC, 1111 01kk kkkk ksss */
+      if ((cpu.data[95] & (1 << (opcode & 7))) == 0) {
+        cpu.pc = cpu.pc +
+            (((opcode & 0x1f8) >> 3) - ((opcode & 0x200) != 0 ? 0x40 : 0));
+        cpu.cycles++;
+      }
+    case 10:
+      /* BRBS, 1111 00kk kkkk ksss */
+      if ((cpu.data[95] & (1 << (opcode & 7))) != 0) {
+        cpu.pc = cpu.pc +
+            (((opcode & 0x1f8) >> 3) - ((opcode & 0x200) != 0 ? 0x40 : 0));
+        cpu.cycles++;
+      }
+    case 11:
+      /* BSET, 1001 0100 0sss 1000 */
+      cpu.data[95] |= 1 << ((opcode & 0x70) >> 4);
+    case 12:
+      /* BST, 1111 101d dddd 0bbb */
+      final int d = cpu.data[(opcode & 0x1f0) >> 4];
+      final int b = opcode & 7;
+      cpu.data[95] = (cpu.data[95] & 0xbf) | (((d >> b) & 1) != 0 ? 0x40 : 0);
+    case 13:
+      /* CALL, 1001 010k kkkk 111k kkkk kkkk kkkk kkkk */
+      final int k = cpu.progMem[cpu.pc + 1] |
+          ((opcode & 1) << 16) |
+          ((opcode & 0x1f0) << 13);
+      final int ret = cpu.pc + 2;
+      final int sp = cpu.dataView.getUint16(93, Endian.little);
+      final bool pc22Bits = cpu.pc22Bits;
+      cpu.data[sp] = 255 & ret;
+      cpu.data[sp - 1] = (ret >> 8) & 255;
+      if (pc22Bits) {
+        cpu.data[sp - 2] = (ret >> 16) & 255;
+      }
+      cpu.dataView.setUint16(93, sp - (pc22Bits ? 3 : 2), Endian.little);
+      cpu.pc = k - 1;
+      cpu.cycles += pc22Bits ? 4 : 3;
+    case 14:
+      /* CBI, 1001 1000 AAAA Abbb */
+      final int A = opcode & 0xf8;
+      final int b = opcode & 7;
+      final int R = cpu.readData((A >> 3) + 32);
+      final int mask = 1 << b;
+      cpu.writeData((A >> 3) + 32, R & ~mask, mask);
+    case 15:
+      /* COM, 1001 010d dddd 0000 */
+      final int d = (opcode & 0x1f0) >> 4;
+      final int R = (255 - cpu.data[d]).toInt();
+      cpu.data[d] = R;
+      int sreg = (cpu.data[95] & 0xe1) | 1;
+      sreg |= ((R) != 0) ? 0 : 2;
+      sreg |= ((128 & R) != 0) ? 4 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
+      cpu.data[95] = sreg;
+    case 16:
+      /* CP, 0001 01rd dddd rrrr */
+      final int val1 = cpu.data[(opcode & 0x1f0) >> 4];
+      final int val2 = cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
+      final int R = val1 - val2;
+      int sreg = cpu.data[95] & 0xc0;
+      sreg |= ((R) != 0) ? 0 : 2;
+      sreg |= ((128 & R) != 0) ? 4 : 0;
+      sreg |= ((val1 ^ val2) & (val1 ^ R) & 128) != 0 ? 8 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
+      sreg |= (val2 > val1) ? 1 : 0;
+      sreg |=
+          ((1 & ((~val1 & val2) | (val2 & R) | (R & ~val1))) != 0) ? 0x20 : 0;
+      cpu.data[95] = sreg;
+    case 17:
+      /* CPC, 0000 01rd dddd rrrr */
+      final int arg1 = cpu.data[(opcode & 0x1f0) >> 4];
+      final int arg2 = cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
+      int sreg = cpu.data[95];
+      final int r = arg1 - arg2 - (sreg & 1);
+      sreg = (sreg & 0xc0) |
+          (r == 0 && ((sreg >> 1) & 1) != 0 ? 2 : 0) |
+          (arg2 + (sreg & 1) > arg1 ? 1 : 0);
+      sreg |= ((128 & r) != 0) ? 4 : 0;
+      sreg |= (((arg1 ^ arg2) & (arg1 ^ r) & 128) != 0) ? 8 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
+      sreg |=
+          ((1 & ((~arg1 & arg2) | (arg2 & r) | (r & ~arg1))) != 0) ? 0x20 : 0;
+      cpu.data[95] = sreg;
+    case 18:
+      /* CPI, 0011 KKKK dddd KKKK */
+      final int arg1 = cpu.data[((opcode & 0xf0) >> 4) + 16];
+      final int arg2 = (opcode & 0xf) | ((opcode & 0xf00) >> 4);
+      final int r = arg1 - arg2;
+      int sreg = cpu.data[95] & 0xc0;
+      sreg |= ((r) != 0) ? 0 : 2;
+      sreg |= ((128 & r) != 0) ? 4 : 0;
+      sreg |= (((arg1 ^ arg2) & (arg1 ^ r) & 128) != 0) ? 8 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
+      sreg |= (arg2 > arg1) ? 1 : 0;
+      sreg |=
+          ((1 & ((~arg1 & arg2) | (arg2 & r) | (r & ~arg1))) != 0) ? 0x20 : 0;
+      cpu.data[95] = sreg;
+    case 19:
+      /* CPSE, 0001 00rd dddd rrrr */
+      if (cpu.data[(opcode & 0x1f0) >> 4] ==
+          cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)]) {
+        final int nextOpcode = cpu.progMem[cpu.pc + 1];
+        final int skipSize = isTwoWordInstruction(nextOpcode) ? 2 : 1;
+        cpu.pc += skipSize;
+        cpu.cycles += skipSize;
+      }
+    case 20:
+      /* DEC, 1001 010d dddd 1010 */
+      final int value = cpu.data[(opcode & 0x1f0) >> 4];
+      final int R = value - 1;
+      cpu.data[(opcode & 0x1f0) >> 4] = R;
+      int sreg = cpu.data[95] & 0xe1;
+      sreg |= ((R) != 0) ? 0 : 2;
+      sreg |= ((128 & R) != 0) ? 4 : 0;
+      sreg |= (128 == value) != 0 ? 8 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
+      cpu.data[95] = sreg;
+    case 21:
+      /* EICALL, 1001 0101 0001 1001 */
+      final int retAddr = cpu.pc + 1;
+      final int sp = cpu.dataView.getUint16(93, Endian.little);
+      final int eind = cpu.data[0x5c];
+      cpu.data[sp] = retAddr & 255;
+      cpu.data[sp - 1] = (retAddr >> 8) & 255;
       cpu.data[sp - 2] = (retAddr >> 16) & 255;
-    }
-    cpu.dataView.setUint16(93, sp - (pc22Bits ? 3 : 2), Endian.little);
-    cpu.pc = cpu.dataView.getUint16(30, Endian.little) - 1;
-    cpu.cycles += pc22Bits ? 3 : 2;
-  } else if (opcode == 0x9409) {
-    /* IJMP, 1001 0100 0000 1001 */
-    cpu.pc = cpu.dataView.getUint16(30, Endian.little) - 1;
-    cpu.cycles++;
-  } else if ((opcode & 0xf800) == 0xb000) {
-    /* IN, 1011 0AAd dddd AAAA */
-    final int i = cpu.readData(((opcode & 0xf) | ((opcode & 0x600) >> 5)) + 32);
-    cpu.data[(opcode & 0x1f0) >> 4] = i;
-  } else if ((opcode & 0xfe0f) == 0x9403) {
-    /* INC, 1001 010d dddd 0011 */
-    final int d = cpu.data[(opcode & 0x1f0) >> 4];
-    final int r = (d + 1) & 255;
-    cpu.data[(opcode & 0x1f0) >> 4] = r;
-    int sreg = cpu.data[95] & 0xe1;
-    sreg |= ((r) != 0) ? 0 : 2;
-    sreg |= ((128 & r) != 0) ? 4 : 0;
-    sreg |= (127 == d) ? 8 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    cpu.data[95] = sreg;
-  } else if ((opcode & 0xfe0e) == 0x940c) {
-    /* JMP, 1001 010k kkkk 110k kkkk kkkk kkkk kkkk */
-    cpu.pc = (cpu.progMem[cpu.pc + 1] |
-            ((opcode & 1) << 16) |
-            ((opcode & 0x1f0) << 13)) -
-        1;
-    cpu.cycles += 2;
-  } else if ((opcode & 0xfe0f) == 0x9206) {
-    /* LAC, 1001 001r rrrr 0110 */
-    final int r = (opcode & 0x1f0) >> 4;
-    final int clear = cpu.data[r];
-    final int value = cpu.readData(cpu.dataView.getUint16(30, Endian.little));
-    cpu.writeData(
-        cpu.dataView.getUint16(30, Endian.little), value & (255 - clear));
-    cpu.data[r] = value;
-  } else if ((opcode & 0xfe0f) == 0x9205) {
-    /* LAS, 1001 001r rrrr 0101 */
-    final int r = (opcode & 0x1f0) >> 4;
-    final int set = cpu.data[r];
-    final int value = cpu.readData(cpu.dataView.getUint16(30, Endian.little));
-    cpu.writeData(cpu.dataView.getUint16(30, Endian.little), value | set);
-    cpu.data[r] = value;
-  } else if ((opcode & 0xfe0f) == 0x9207) {
-    /* LAT, 1001 001r rrrr 0111 */
-    final int r = cpu.data[(opcode & 0x1f0) >> 4];
-    final int R = cpu.readData(cpu.dataView.getUint16(30, Endian.little));
-    cpu.writeData(cpu.dataView.getUint16(30, Endian.little), r ^ R);
-    cpu.data[(opcode & 0x1f0) >> 4] = R;
-  } else if ((opcode & 0xf000) == 0xe000) {
-    /* LDI, 1110 KKKK dddd KKKK */
-    cpu.data[((opcode & 0xf0) >> 4) + 16] =
-        (opcode & 0xf) | ((opcode & 0xf00) >> 4);
-  } else if ((opcode & 0xfe0f) == 0x9000) {
-    /* LDS, 1001 000d dddd 0000 kkkk kkkk kkkk kkkk */
-    cpu.cycles++;
-    final int value = cpu.readData(cpu.progMem[cpu.pc + 1]);
-    cpu.data[(opcode & 0x1f0) >> 4] = value;
-    cpu.pc++;
-  } else if ((opcode & 0xfe0f) == 0x900c) {
-    /* LDX, 1001 000d dddd 1100 */
-    cpu.cycles++;
-    cpu.data[(opcode & 0x1f0) >> 4] =
-        cpu.readData(cpu.dataView.getUint16(26, Endian.little));
-  } else if ((opcode & 0xfe0f) == 0x900d) {
-    /* LDX(INC), 1001 000d dddd 1101 */
-    final int x = cpu.dataView.getUint16(26, Endian.little);
-    cpu.cycles++;
-    cpu.data[(opcode & 0x1f0) >> 4] = cpu.readData(x);
-    cpu.dataView.setUint16(26, x + 1, Endian.little);
-  } else if ((opcode & 0xfe0f) == 0x900e) {
-    /* LDX(DEC), 1001 000d dddd 1110 */
-    final int x = cpu.dataView.getUint16(26, Endian.little) - 1;
-    cpu.dataView.setUint16(26, x, Endian.little);
-    cpu.cycles++;
-    cpu.data[(opcode & 0x1f0) >> 4] = cpu.readData(x);
-  } else if ((opcode & 0xfe0f) == 0x8008) {
-    /* LDY, 1000 000d dddd 1000 */
-    cpu.cycles++;
-    cpu.data[(opcode & 0x1f0) >> 4] =
-        cpu.readData(cpu.dataView.getUint16(28, Endian.little));
-  } else if ((opcode & 0xfe0f) == 0x9009) {
-    /* LDY(INC), 1001 000d dddd 1001 */
-    final int y = cpu.dataView.getUint16(28, Endian.little);
-    cpu.cycles++;
-    cpu.data[(opcode & 0x1f0) >> 4] = cpu.readData(y);
-    cpu.dataView.setUint16(28, y + 1, Endian.little);
-  } else if ((opcode & 0xfe0f) == 0x900a) {
-    /* LDY(DEC), 1001 000d dddd 1010 */
-    final int y = cpu.dataView.getUint16(28, Endian.little) - 1;
-    cpu.dataView.setUint16(28, y, Endian.little);
-    cpu.cycles++;
-    cpu.data[(opcode & 0x1f0) >> 4] = cpu.readData(y);
-  } else if ((opcode & 0xd208) == 0x8008 &&
-      ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)) !=
-          0) {
-    /* LDDY, 10q0 qq0d dddd 1qqq */
-    cpu.cycles++;
-    cpu.data[(opcode & 0x1f0) >> 4] = cpu.readData(
-      cpu.dataView.getUint16(28, Endian.little) +
-          ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)),
-    );
-  } else if ((opcode & 0xfe0f) == 0x8000) {
-    /* LDZ, 1000 000d dddd 0000 */
-    cpu.cycles++;
-    cpu.data[(opcode & 0x1f0) >> 4] =
-        cpu.readData(cpu.dataView.getUint16(30, Endian.little));
-  } else if ((opcode & 0xfe0f) == 0x9001) {
-    /* LDZ(INC), 1001 000d dddd 0001 */
-    final int z = cpu.dataView.getUint16(30, Endian.little);
-    cpu.cycles++;
-    cpu.data[(opcode & 0x1f0) >> 4] = cpu.readData(z);
-    cpu.dataView.setUint16(30, z + 1, Endian.little);
-  } else if ((opcode & 0xfe0f) == 0x9002) {
-    /* LDZ(DEC), 1001 000d dddd 0010 */
-    final int z = cpu.dataView.getUint16(30, Endian.little) - 1;
-    cpu.dataView.setUint16(30, z, Endian.little);
-    cpu.cycles++;
-    cpu.data[(opcode & 0x1f0) >> 4] = cpu.readData(z);
-  } else if ((opcode & 0xd208) == 0x8000 &&
-      ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)) !=
-          0) {
-    /* LDDZ, 10q0 qq0d dddd 0qqq */
-    cpu.cycles++;
-    cpu.data[(opcode & 0x1f0) >> 4] = cpu.readData(
-      cpu.dataView.getUint16(30, Endian.little) +
-          ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)),
-    );
-  } else if (opcode == 0x95c8) {
-    /* LPM, 1001 0101 1100 1000 */
-    cpu.data[0] = cpu.progBytes[cpu.dataView.getUint16(30, Endian.little)];
-    cpu.cycles += 2;
-  } else if ((opcode & 0xfe0f) == 0x9004) {
-    /* LPM(REG), 1001 000d dddd 0100 */
-    cpu.data[(opcode & 0x1f0) >> 4] =
-        cpu.progBytes[cpu.dataView.getUint16(30, Endian.little)];
-    cpu.cycles += 2;
-  } else if ((opcode & 0xfe0f) == 0x9005) {
-    /* LPM(INC), 1001 000d dddd 0101 */
-    final int i = cpu.dataView.getUint16(30, Endian.little);
-    cpu.data[(opcode & 0x1f0) >> 4] = cpu.progBytes[i];
-    cpu.dataView.setUint16(30, i + 1, Endian.little);
-    cpu.cycles += 2;
-  } else if ((opcode & 0xfe0f) == 0x9406) {
-    /* LSR, 1001 010d dddd 0110 */
-    final int value = cpu.data[(opcode & 0x1f0) >> 4];
-    final int R = value >>> 1;
-    cpu.data[(opcode & 0x1f0) >> 4] = R;
-    int sreg = cpu.data[95] & 0xe0;
-    sreg |= ((R) != 0) ? 0 : 2;
-    sreg |= value & 1;
-    sreg |= (((sreg >> 2) & 1) ^ (sreg & 1)) != 0 ? 8 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    cpu.data[95] = sreg;
-  } else if ((opcode & 0xfc00) == 0x2c00) {
-    /* MOV, 0010 11rd dddd rrrr */
-    cpu.data[(opcode & 0x1f0) >> 4] =
-        cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
-  } else if ((opcode & 0xff00) == 0x100) {
-    /* MOVW, 0000 0001 dddd rrrr */
-    final int r2 = 2 * (opcode & 0xf);
-    final int d2 = 2 * ((opcode & 0xf0) >> 4);
-    cpu.data[d2] = cpu.data[r2];
-    cpu.data[d2 + 1] = cpu.data[r2 + 1];
-  } else if ((opcode & 0xfc00) == 0x9c00) {
-    /* MUL, 1001 11rd dddd rrrr */
-    final int R = cpu.data[(opcode & 0x1f0) >> 4] *
-        cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
-    cpu.dataView.setUint16(0, R, Endian.little);
-    cpu.data[95] = (cpu.data[95] & 0xfc) |
-        ((0xffff & R) != 0 ? 0 : 2) |
-        ((0x8000 & R) != 0 ? 1 : 0);
-    cpu.cycles++;
-  } else if ((opcode & 0xff00) == 0x200) {
-    /* MULS, 0000 0010 dddd rrrr */
-    final int R = cpu.dataView.getInt8(((opcode & 0xf0) >> 4) + 16) *
-        cpu.dataView.getInt8((opcode & 0xf) + 16);
-    cpu.dataView.setInt16(0, R, Endian.little);
-    cpu.data[95] = (cpu.data[95] & 0xfc) |
-        ((0xffff & R) != 0 ? 0 : 2) |
-        ((0x8000 & R) != 0 ? 1 : 0);
-    cpu.cycles++;
-  } else if ((opcode & 0xff88) == 0x300) {
-    /* MULSU, 0000 0011 0ddd 0rrr */
-    final int R = cpu.dataView.getInt8(((opcode & 0x70) >> 4) + 16) *
-        cpu.data[(opcode & 7) + 16];
-    cpu.dataView.setInt16(0, R, Endian.little);
-    cpu.data[95] = (cpu.data[95] & 0xfc) |
-        ((0xffff & R) != 0 ? 0 : 2) |
-        ((0x8000 & R) != 0 ? 1 : 0);
-    cpu.cycles++;
-  } else if ((opcode & 0xfe0f) == 0x9401) {
-    /* NEG, 1001 010d dddd 0001 */
-    final int d = (opcode & 0x1f0) >> 4;
-    final int value = cpu.data[d];
-    final int R = 0 - value;
-    cpu.data[d] = R;
-    int sreg = cpu.data[95] & 0xc0;
-    sreg |= ((R) != 0) ? 0 : 2;
-    sreg |= ((128 & R) != 0) ? 4 : 0;
-    sreg |= (128 == R) ? 8 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= ((R) != 0) ? 1 : 0;
-    sreg |= ((1 & (R | value)) != 0) ? 0x20 : 0;
-    cpu.data[95] = sreg;
-  } else if (opcode == 0) {
+      cpu.dataView.setUint16(93, sp - 3, Endian.little);
+      cpu.pc = ((eind << 16) | cpu.dataView.getUint16(30, Endian.little)) - 1;
+      cpu.cycles += 3;
+    case 22:
+      /* EIJMP, 1001 0100 0001 1001 */
+      final int eind = cpu.data[0x5c];
+      cpu.pc = ((eind << 16) | cpu.dataView.getUint16(30, Endian.little)) - 1;
+      cpu.cycles++;
+    case 23:
+      /* ELPM, 1001 0101 1101 1000 */
+      final int rampz = cpu.data[0x5b];
+      cpu.data[0] = cpu
+          .progBytes[(rampz << 16) | cpu.dataView.getUint16(30, Endian.little)];
+      cpu.cycles += 2;
+    case 24:
+      /* ELPM(REG), 1001 000d dddd 0110 */
+      final int rampz = cpu.data[0x5b];
+      cpu.data[(opcode & 0x1f0) >> 4] = cpu
+          .progBytes[(rampz << 16) | cpu.dataView.getUint16(30, Endian.little)];
+      cpu.cycles += 2;
+    case 25:
+      /* ELPM(INC), 1001 000d dddd 0111 */
+      final int rampz = cpu.data[0x5b];
+      final int i = cpu.dataView.getUint16(30, Endian.little);
+      cpu.data[(opcode & 0x1f0) >> 4] = cpu.progBytes[(rampz << 16) | i];
+      cpu.dataView.setUint16(30, i + 1, Endian.little);
+      if (i == 0xffff) {
+        cpu.data[0x5b] = (rampz + 1) % (cpu.progBytes.length >> 16);
+      }
+      cpu.cycles += 2;
+    case 26:
+      /* EOR, 0010 01rd dddd rrrr */
+      final int R = cpu.data[(opcode & 0x1f0) >> 4] ^
+          cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
+      cpu.data[(opcode & 0x1f0) >> 4] = R;
+      int sreg = cpu.data[95] & 0xe1;
+      sreg |= ((R) != 0) ? 0 : 2;
+      sreg |= ((128 & R) != 0) ? 4 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
+      cpu.data[95] = sreg;
+    case 27:
+      /* FMUL, 0000 0011 0ddd 1rrr */
+      final int v1 = cpu.data[((opcode & 0x70) >> 4) + 16];
+      final int v2 = cpu.data[(opcode & 7) + 16];
+      final int R = (v1 * v2) << 1;
+      cpu.dataView.setUint16(0, R, Endian.little);
+      cpu.data[95] = (cpu.data[95] & 0xfc) |
+          ((0xffff & R) != 0 ? 0 : 2) |
+          (((v1 * v2) & 0x8000) != 0 ? 1 : 0);
+      cpu.cycles++;
+    case 28:
+      /* FMULS, 0000 0011 1ddd 0rrr */
+      final int v1 = cpu.dataView.getInt8(((opcode & 0x70) >> 4) + 16);
+      final int v2 = cpu.dataView.getInt8((opcode & 7) + 16);
+      final int R = (v1 * v2) << 1;
+      cpu.dataView.setInt16(0, R, Endian.little);
+      cpu.data[95] = (cpu.data[95] & 0xfc) |
+          ((0xffff & R) != 0 ? 0 : 2) |
+          (((v1 * v2) & 0x8000) != 0 ? 1 : 0);
+      cpu.cycles++;
+    case 29:
+      /* FMULSU, 0000 0011 1ddd 1rrr */
+      final int v1 = cpu.dataView.getInt8(((opcode & 0x70) >> 4) + 16);
+      final int v2 = cpu.data[(opcode & 7) + 16];
+      final int R = (v1 * v2) << 1;
+      cpu.dataView.setInt16(0, R, Endian.little);
+      cpu.data[95] = (cpu.data[95] & 0xfc) |
+          ((0xffff & R) != 0 ? 2 : 0) |
+          (((v1 * v2) & 0x8000) != 0 ? 1 : 0);
+      cpu.cycles++;
+    case 30:
+      /* ICALL, 1001 0101 0000 1001 */
+      final int retAddr = cpu.pc + 1;
+      final int sp = cpu.dataView.getUint16(93, Endian.little);
+      final bool pc22Bits = cpu.pc22Bits;
+      cpu.data[sp] = retAddr & 255;
+      cpu.data[sp - 1] = (retAddr >> 8) & 255;
+      if (pc22Bits) {
+        cpu.data[sp - 2] = (retAddr >> 16) & 255;
+      }
+      cpu.dataView.setUint16(93, sp - (pc22Bits ? 3 : 2), Endian.little);
+      cpu.pc = cpu.dataView.getUint16(30, Endian.little) - 1;
+      cpu.cycles += pc22Bits ? 3 : 2;
+    case 31:
+      /* IJMP, 1001 0100 0000 1001 */
+      cpu.pc = cpu.dataView.getUint16(30, Endian.little) - 1;
+      cpu.cycles++;
+    case 32:
+      /* IN, 1011 0AAd dddd AAAA */
+      final int i =
+          cpu.readData(((opcode & 0xf) | ((opcode & 0x600) >> 5)) + 32);
+      cpu.data[(opcode & 0x1f0) >> 4] = i;
+    case 33:
+      /* INC, 1001 010d dddd 0011 */
+      final int d = cpu.data[(opcode & 0x1f0) >> 4];
+      final int r = (d + 1) & 255;
+      cpu.data[(opcode & 0x1f0) >> 4] = r;
+      int sreg = cpu.data[95] & 0xe1;
+      sreg |= ((r) != 0) ? 0 : 2;
+      sreg |= ((128 & r) != 0) ? 4 : 0;
+      sreg |= (127 == d) ? 8 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
+      cpu.data[95] = sreg;
+    case 34:
+      /* JMP, 1001 010k kkkk 110k kkkk kkkk kkkk kkkk */
+      cpu.pc = (cpu.progMem[cpu.pc + 1] |
+              ((opcode & 1) << 16) |
+              ((opcode & 0x1f0) << 13)) -
+          1;
+      cpu.cycles += 2;
+    case 35:
+      /* LAC, 1001 001r rrrr 0110 */
+      final int r = (opcode & 0x1f0) >> 4;
+      final int clear = cpu.data[r];
+      final int value = cpu.readData(cpu.dataView.getUint16(30, Endian.little));
+      cpu.writeData(
+          cpu.dataView.getUint16(30, Endian.little), value & (255 - clear));
+      cpu.data[r] = value;
+    case 36:
+      /* LAS, 1001 001r rrrr 0101 */
+      final int r = (opcode & 0x1f0) >> 4;
+      final int set = cpu.data[r];
+      final int value = cpu.readData(cpu.dataView.getUint16(30, Endian.little));
+      cpu.writeData(cpu.dataView.getUint16(30, Endian.little), value | set);
+      cpu.data[r] = value;
+    case 37:
+      /* LAT, 1001 001r rrrr 0111 */
+      final int r = cpu.data[(opcode & 0x1f0) >> 4];
+      final int R = cpu.readData(cpu.dataView.getUint16(30, Endian.little));
+      cpu.writeData(cpu.dataView.getUint16(30, Endian.little), r ^ R);
+      cpu.data[(opcode & 0x1f0) >> 4] = R;
+    case 38:
+      /* LDI, 1110 KKKK dddd KKKK */
+      cpu.data[((opcode & 0xf0) >> 4) + 16] =
+          (opcode & 0xf) | ((opcode & 0xf00) >> 4);
+    case 39:
+      /* LDS, 1001 000d dddd 0000 kkkk kkkk kkkk kkkk */
+      cpu.cycles++;
+      final int value = cpu.readData(cpu.progMem[cpu.pc + 1]);
+      cpu.data[(opcode & 0x1f0) >> 4] = value;
+      cpu.pc++;
+    case 40:
+      /* LDX, 1001 000d dddd 1100 */
+      cpu.cycles++;
+      cpu.data[(opcode & 0x1f0) >> 4] =
+          cpu.readData(cpu.dataView.getUint16(26, Endian.little));
+    case 41:
+      /* LDX(INC), 1001 000d dddd 1101 */
+      final int x = cpu.dataView.getUint16(26, Endian.little);
+      cpu.cycles++;
+      cpu.data[(opcode & 0x1f0) >> 4] = cpu.readData(x);
+      cpu.dataView.setUint16(26, x + 1, Endian.little);
+    case 42:
+      /* LDX(DEC), 1001 000d dddd 1110 */
+      final int x = cpu.dataView.getUint16(26, Endian.little) - 1;
+      cpu.dataView.setUint16(26, x, Endian.little);
+      cpu.cycles++;
+      cpu.data[(opcode & 0x1f0) >> 4] = cpu.readData(x);
+    case 43:
+      /* LDY, 1000 000d dddd 1000 */
+      cpu.cycles++;
+      cpu.data[(opcode & 0x1f0) >> 4] =
+          cpu.readData(cpu.dataView.getUint16(28, Endian.little));
+    case 44:
+      /* LDY(INC), 1001 000d dddd 1001 */
+      final int y = cpu.dataView.getUint16(28, Endian.little);
+      cpu.cycles++;
+      cpu.data[(opcode & 0x1f0) >> 4] = cpu.readData(y);
+      cpu.dataView.setUint16(28, y + 1, Endian.little);
+    case 45:
+      /* LDY(DEC), 1001 000d dddd 1010 */
+      final int y = cpu.dataView.getUint16(28, Endian.little) - 1;
+      cpu.dataView.setUint16(28, y, Endian.little);
+      cpu.cycles++;
+      cpu.data[(opcode & 0x1f0) >> 4] = cpu.readData(y);
+    case 46:
+      /* LDDY, 10q0 qq0d dddd 1qqq */
+      cpu.cycles++;
+      cpu.data[(opcode & 0x1f0) >> 4] = cpu.readData(
+        cpu.dataView.getUint16(28, Endian.little) +
+            ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)),
+      );
+    case 47:
+      /* LDZ, 1000 000d dddd 0000 */
+      cpu.cycles++;
+      cpu.data[(opcode & 0x1f0) >> 4] =
+          cpu.readData(cpu.dataView.getUint16(30, Endian.little));
+    case 48:
+      /* LDZ(INC), 1001 000d dddd 0001 */
+      final int z = cpu.dataView.getUint16(30, Endian.little);
+      cpu.cycles++;
+      cpu.data[(opcode & 0x1f0) >> 4] = cpu.readData(z);
+      cpu.dataView.setUint16(30, z + 1, Endian.little);
+    case 49:
+      /* LDZ(DEC), 1001 000d dddd 0010 */
+      final int z = cpu.dataView.getUint16(30, Endian.little) - 1;
+      cpu.dataView.setUint16(30, z, Endian.little);
+      cpu.cycles++;
+      cpu.data[(opcode & 0x1f0) >> 4] = cpu.readData(z);
+    case 50:
+      /* LDDZ, 10q0 qq0d dddd 0qqq */
+      cpu.cycles++;
+      cpu.data[(opcode & 0x1f0) >> 4] = cpu.readData(
+        cpu.dataView.getUint16(30, Endian.little) +
+            ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)),
+      );
+    case 51:
+      /* LPM, 1001 0101 1100 1000 */
+      cpu.data[0] = cpu.progBytes[cpu.dataView.getUint16(30, Endian.little)];
+      cpu.cycles += 2;
+    case 52:
+      /* LPM(REG), 1001 000d dddd 0100 */
+      cpu.data[(opcode & 0x1f0) >> 4] =
+          cpu.progBytes[cpu.dataView.getUint16(30, Endian.little)];
+      cpu.cycles += 2;
+    case 53:
+      /* LPM(INC), 1001 000d dddd 0101 */
+      final int i = cpu.dataView.getUint16(30, Endian.little);
+      cpu.data[(opcode & 0x1f0) >> 4] = cpu.progBytes[i];
+      cpu.dataView.setUint16(30, i + 1, Endian.little);
+      cpu.cycles += 2;
+    case 54:
+      /* LSR, 1001 010d dddd 0110 */
+      final int value = cpu.data[(opcode & 0x1f0) >> 4];
+      final int R = value >>> 1;
+      cpu.data[(opcode & 0x1f0) >> 4] = R;
+      int sreg = cpu.data[95] & 0xe0;
+      sreg |= ((R) != 0) ? 0 : 2;
+      sreg |= value & 1;
+      sreg |= (((sreg >> 2) & 1) ^ (sreg & 1)) != 0 ? 8 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
+      cpu.data[95] = sreg;
+    case 55:
+      /* MOV, 0010 11rd dddd rrrr */
+      cpu.data[(opcode & 0x1f0) >> 4] =
+          cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
+    case 56:
+      /* MOVW, 0000 0001 dddd rrrr */
+      final int r2 = 2 * (opcode & 0xf);
+      final int d2 = 2 * ((opcode & 0xf0) >> 4);
+      cpu.data[d2] = cpu.data[r2];
+      cpu.data[d2 + 1] = cpu.data[r2 + 1];
+    case 57:
+      /* MUL, 1001 11rd dddd rrrr */
+      final int R = cpu.data[(opcode & 0x1f0) >> 4] *
+          cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
+      cpu.dataView.setUint16(0, R, Endian.little);
+      cpu.data[95] = (cpu.data[95] & 0xfc) |
+          ((0xffff & R) != 0 ? 0 : 2) |
+          ((0x8000 & R) != 0 ? 1 : 0);
+      cpu.cycles++;
+    case 58:
+      /* MULS, 0000 0010 dddd rrrr */
+      final int R = cpu.dataView.getInt8(((opcode & 0xf0) >> 4) + 16) *
+          cpu.dataView.getInt8((opcode & 0xf) + 16);
+      cpu.dataView.setInt16(0, R, Endian.little);
+      cpu.data[95] = (cpu.data[95] & 0xfc) |
+          ((0xffff & R) != 0 ? 0 : 2) |
+          ((0x8000 & R) != 0 ? 1 : 0);
+      cpu.cycles++;
+    case 59:
+      /* MULSU, 0000 0011 0ddd 0rrr */
+      final int R = cpu.dataView.getInt8(((opcode & 0x70) >> 4) + 16) *
+          cpu.data[(opcode & 7) + 16];
+      cpu.dataView.setInt16(0, R, Endian.little);
+      cpu.data[95] = (cpu.data[95] & 0xfc) |
+          ((0xffff & R) != 0 ? 0 : 2) |
+          ((0x8000 & R) != 0 ? 1 : 0);
+      cpu.cycles++;
+    case 60:
+      /* NEG, 1001 010d dddd 0001 */
+      final int d = (opcode & 0x1f0) >> 4;
+      final int value = cpu.data[d];
+      final int R = 0 - value;
+      cpu.data[d] = R;
+      int sreg = cpu.data[95] & 0xc0;
+      sreg |= ((R) != 0) ? 0 : 2;
+      sreg |= ((128 & R) != 0) ? 4 : 0;
+      sreg |= (128 == R) ? 8 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
+      sreg |= ((R) != 0) ? 1 : 0;
+      sreg |= ((1 & (R | value)) != 0) ? 0x20 : 0;
+      cpu.data[95] = sreg;
+    case 61:
     /* NOP, 0000 0000 0000 0000 */
     /* NOP */
-  } else if ((opcode & 0xfc00) == 0x2800) {
-    /* OR, 0010 10rd dddd rrrr */
-    final int R = cpu.data[(opcode & 0x1f0) >> 4] |
-        cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
-    cpu.data[(opcode & 0x1f0) >> 4] = R;
-    int sreg = cpu.data[95] & 0xe1;
-    sreg |= ((R) != 0) ? 0 : 2;
-    sreg |= ((128 & R) != 0) ? 4 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    cpu.data[95] = sreg;
-  } else if ((opcode & 0xf000) == 0x6000) {
-    /* SBR, 0110 KKKK dddd KKKK */
-    final int R = cpu.data[((opcode & 0xf0) >> 4) + 16] |
-        ((opcode & 0xf) | ((opcode & 0xf00) >> 4));
-    cpu.data[((opcode & 0xf0) >> 4) + 16] = R;
-    int sreg = cpu.data[95] & 0xe1;
-    sreg |= ((R) != 0) ? 0 : 2;
-    sreg |= ((128 & R) != 0) ? 4 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    cpu.data[95] = sreg;
-  } else if ((opcode & 0xf800) == 0xb800) {
-    /* OUT, 1011 1AAr rrrr AAAA */
-    cpu.writeData(((opcode & 0xf) | ((opcode & 0x600) >> 5)) + 32,
-        cpu.data[(opcode & 0x1f0) >> 4]);
-  } else if ((opcode & 0xfe0f) == 0x900f) {
-    /* POP, 1001 000d dddd 1111 */
-    final int value = cpu.dataView.getUint16(93, Endian.little) + 1;
-    cpu.dataView.setUint16(93, value, Endian.little);
-    cpu.data[(opcode & 0x1f0) >> 4] = cpu.data[value];
-    cpu.cycles++;
-  } else if ((opcode & 0xfe0f) == 0x920f) {
-    /* PUSH, 1001 001d dddd 1111 */
-    final int value = cpu.dataView.getUint16(93, Endian.little);
-    cpu.data[value] = cpu.data[(opcode & 0x1f0) >> 4];
-    cpu.dataView.setUint16(93, value - 1, Endian.little);
-    cpu.cycles++;
-  } else if ((opcode & 0xf000) == 0xd000) {
-    /* RCALL, 1101 kkkk kkkk kkkk */
-    final int k = (opcode & 0x7ff) - ((opcode & 0x800) != 0 ? 0x800 : 0);
-    final int retAddr = cpu.pc + 1;
-    final int sp = cpu.dataView.getUint16(93, Endian.little);
-    final bool pc22Bits = cpu.pc22Bits;
-    cpu.data[sp] = 255 & retAddr;
-    cpu.data[sp - 1] = (retAddr >> 8) & 255;
-    if (pc22Bits) {
-      cpu.data[sp - 2] = (retAddr >> 16) & 255;
-    }
-    cpu.dataView.setUint16(93, sp - (pc22Bits ? 3 : 2), Endian.little);
-    cpu.pc += k;
-    cpu.cycles += pc22Bits ? 3 : 2;
-  } else if (opcode == 0x9508) {
-    /* RET, 1001 0101 0000 1000 */
-    final bool pc22Bits = cpu.pc22Bits;
-    final int i =
-        cpu.dataView.getUint16(93, Endian.little) + (pc22Bits ? 3 : 2);
-    cpu.dataView.setUint16(93, i, Endian.little);
-    cpu.pc = (cpu.data[i - 1] << 8) + cpu.data[i] - 1;
-    if (pc22Bits) {
-      cpu.pc |= cpu.data[i - 2] << 16;
-    }
-    cpu.cycles += pc22Bits ? 4 : 3;
-  } else if (opcode == 0x9518) {
-    /* RETI, 1001 0101 0001 1000 */
-    final bool pc22Bits = cpu.pc22Bits;
-    final int i =
-        cpu.dataView.getUint16(93, Endian.little) + (pc22Bits ? 3 : 2);
-    cpu.dataView.setUint16(93, i, Endian.little);
-    cpu.pc = (cpu.data[i - 1] << 8) + cpu.data[i] - 1;
-    if (pc22Bits) {
-      cpu.pc |= cpu.data[i - 2] << 16;
-    }
-    cpu.cycles += pc22Bits ? 4 : 3;
-    cpu.data[95] |= 0x80; // Enable interrupts
-  } else if ((opcode & 0xf000) == 0xc000) {
-    /* RJMP, 1100 kkkk kkkk kkkk */
-    cpu.pc = cpu.pc + ((opcode & 0x7ff) - ((opcode & 0x800) != 0 ? 0x800 : 0));
-    cpu.cycles++;
-  } else if ((opcode & 0xfe0f) == 0x9407) {
-    /* ROR, 1001 010d dddd 0111 */
-    final int d = cpu.data[(opcode & 0x1f0) >> 4];
-    final int r = (d >>> 1) | ((cpu.data[95] & 1) << 7);
-    cpu.data[(opcode & 0x1f0) >> 4] = r;
-    int sreg = cpu.data[95] & 0xe0;
-    sreg |= ((r) != 0) ? 0 : 2;
-    sreg |= ((128 & r) != 0) ? 4 : 0;
-    sreg |= ((1 & d) != 0) ? 1 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ (sreg & 1)) != 0 ? 8 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    cpu.data[95] = sreg;
-  } else if ((opcode & 0xfc00) == 0x800) {
-    /* SBC, 0000 10rd dddd rrrr */
-    final int val1 = cpu.data[(opcode & 0x1f0) >> 4];
-    final int val2 = cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
-    int sreg = cpu.data[95];
-    final int R = val1 - val2 - (sreg & 1);
-    cpu.data[(opcode & 0x1f0) >> 4] = R;
-    sreg = (sreg & 0xc0) |
-        (R == 0 && ((sreg >> 1) & 1) != 0 ? 2 : 0) |
-        (val2 + (sreg & 1) > val1 ? 1 : 0);
-    sreg |= ((128 & R) != 0) ? 4 : 0;
-    sreg |= (((val1 ^ val2) & (val1 ^ R) & 128) != 0) ? 8 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= ((1 & ((~val1 & val2) | (val2 & R) | (R & ~val1))) != 0) ? 0x20 : 0;
-    cpu.data[95] = sreg;
-  } else if ((opcode & 0xf000) == 0x4000) {
-    /* SBCI, 0100 KKKK dddd KKKK */
-    final int val1 = cpu.data[((opcode & 0xf0) >> 4) + 16];
-    final int val2 = (opcode & 0xf) | ((opcode & 0xf00) >> 4);
-    int sreg = cpu.data[95];
-    final int R = val1 - val2 - (sreg & 1);
-    cpu.data[((opcode & 0xf0) >> 4) + 16] = R;
-    sreg = (sreg & 0xc0) |
-        (R == 0 && ((sreg >> 1) & 1) != 0 ? 2 : 0) |
-        (val2 + (sreg & 1) > val1 ? 1 : 0);
-    sreg |= ((128 & R) != 0) ? 4 : 0;
-    sreg |= (((val1 ^ val2) & (val1 ^ R) & 128) != 0) ? 8 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= ((1 & ((~val1 & val2) | (val2 & R) | (R & ~val1))) != 0) ? 0x20 : 0;
-    cpu.data[95] = sreg;
-  } else if ((opcode & 0xff00) == 0x9a00) {
-    /* SBI, 1001 1010 AAAA Abbb */
-    final int target = ((opcode & 0xf8) >> 3) + 32;
-    final int mask = 1 << (opcode & 7);
-    cpu.writeData(target, cpu.readData(target) | mask, mask);
-    cpu.cycles++;
-  } else if ((opcode & 0xff00) == 0x9900) {
-    /* SBIC, 1001 1001 AAAA Abbb */
-    final int value = cpu.readData(((opcode & 0xf8) >> 3) + 32);
-    if ((value & (1 << (opcode & 7))) == 0) {
-      final int nextOpcode = cpu.progMem[cpu.pc + 1];
-      final int skipSize = isTwoWordInstruction(nextOpcode) ? 2 : 1;
-      cpu.cycles += skipSize;
-      cpu.pc += skipSize;
-    }
-  } else if ((opcode & 0xff00) == 0x9b00) {
-    /* SBIS, 1001 1011 AAAA Abbb */
-    final int value = cpu.readData(((opcode & 0xf8) >> 3) + 32);
-    if ((value & (1 << (opcode & 7))) != 0) {
-      final int nextOpcode = cpu.progMem[cpu.pc + 1];
-      final int skipSize = isTwoWordInstruction(nextOpcode) ? 2 : 1;
-      cpu.cycles += skipSize;
-      cpu.pc += skipSize;
-    }
-  } else if ((opcode & 0xff00) == 0x9700) {
-    /* SBIW, 1001 0111 KKdd KKKK */
-    final int i = 2 * ((opcode & 0x30) >> 4) + 24;
-    final int a = cpu.dataView.getUint16(i, Endian.little);
-    final int l = (opcode & 0xf) | ((opcode & 0xc0) >> 2);
-    final int R = a - l;
-    cpu.dataView.setUint16(i, R, Endian.little);
-    int sreg = cpu.data[95] & 0xc0;
-    sreg |= ((R) != 0) ? 0 : 2;
-    sreg |= ((0x8000 & R) != 0) ? 4 : 0;
-    sreg |= ((a & ~R & 0x8000) != 0) ? 8 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= (l > a) ? 1 : 0;
-    sreg |= ((1 & ((~a & l) | (l & R) | (R & ~a))) != 0) ? 0x20 : 0;
-    cpu.data[95] = sreg;
-    cpu.cycles++;
-  } else if ((opcode & 0xfe08) == 0xfc00) {
-    /* SBRC, 1111 110r rrrr 0bbb */
-    if ((cpu.data[(opcode & 0x1f0) >> 4] & (1 << (opcode & 7))) == 0) {
-      final int nextOpcode = cpu.progMem[cpu.pc + 1];
-      final int skipSize = isTwoWordInstruction(nextOpcode) ? 2 : 1;
-      cpu.cycles += skipSize;
-      cpu.pc += skipSize;
-    }
-  } else if ((opcode & 0xfe08) == 0xfe00) {
-    /* SBRS, 1111 111r rrrr 0bbb */
-    if ((cpu.data[(opcode & 0x1f0) >> 4] & (1 << (opcode & 7))) != 0) {
-      final int nextOpcode = cpu.progMem[cpu.pc + 1];
-      final int skipSize = isTwoWordInstruction(nextOpcode) ? 2 : 1;
-      cpu.cycles += skipSize;
-      cpu.pc += skipSize;
-    }
-  } else if (opcode == 0x9588) {
+    case 62:
+      /* OR, 0010 10rd dddd rrrr */
+      final int R = cpu.data[(opcode & 0x1f0) >> 4] |
+          cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
+      cpu.data[(opcode & 0x1f0) >> 4] = R;
+      int sreg = cpu.data[95] & 0xe1;
+      sreg |= ((R) != 0) ? 0 : 2;
+      sreg |= ((128 & R) != 0) ? 4 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
+      cpu.data[95] = sreg;
+    case 63:
+      /* SBR, 0110 KKKK dddd KKKK */
+      final int R = cpu.data[((opcode & 0xf0) >> 4) + 16] |
+          ((opcode & 0xf) | ((opcode & 0xf00) >> 4));
+      cpu.data[((opcode & 0xf0) >> 4) + 16] = R;
+      int sreg = cpu.data[95] & 0xe1;
+      sreg |= ((R) != 0) ? 0 : 2;
+      sreg |= ((128 & R) != 0) ? 4 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
+      cpu.data[95] = sreg;
+    case 64:
+      /* OUT, 1011 1AAr rrrr AAAA */
+      cpu.writeData(((opcode & 0xf) | ((opcode & 0x600) >> 5)) + 32,
+          cpu.data[(opcode & 0x1f0) >> 4]);
+    case 65:
+      /* POP, 1001 000d dddd 1111 */
+      final int value = cpu.dataView.getUint16(93, Endian.little) + 1;
+      cpu.dataView.setUint16(93, value, Endian.little);
+      cpu.data[(opcode & 0x1f0) >> 4] = cpu.data[value];
+      cpu.cycles++;
+    case 66:
+      /* PUSH, 1001 001d dddd 1111 */
+      final int value = cpu.dataView.getUint16(93, Endian.little);
+      cpu.data[value] = cpu.data[(opcode & 0x1f0) >> 4];
+      cpu.dataView.setUint16(93, value - 1, Endian.little);
+      cpu.cycles++;
+    case 67:
+      /* RCALL, 1101 kkkk kkkk kkkk */
+      final int k = (opcode & 0x7ff) - ((opcode & 0x800) != 0 ? 0x800 : 0);
+      final int retAddr = cpu.pc + 1;
+      final int sp = cpu.dataView.getUint16(93, Endian.little);
+      final bool pc22Bits = cpu.pc22Bits;
+      cpu.data[sp] = 255 & retAddr;
+      cpu.data[sp - 1] = (retAddr >> 8) & 255;
+      if (pc22Bits) {
+        cpu.data[sp - 2] = (retAddr >> 16) & 255;
+      }
+      cpu.dataView.setUint16(93, sp - (pc22Bits ? 3 : 2), Endian.little);
+      cpu.pc += k;
+      cpu.cycles += pc22Bits ? 3 : 2;
+    case 68:
+      /* RET, 1001 0101 0000 1000 */
+      final bool pc22Bits = cpu.pc22Bits;
+      final int i =
+          cpu.dataView.getUint16(93, Endian.little) + (pc22Bits ? 3 : 2);
+      cpu.dataView.setUint16(93, i, Endian.little);
+      cpu.pc = (cpu.data[i - 1] << 8) + cpu.data[i] - 1;
+      if (pc22Bits) {
+        cpu.pc |= cpu.data[i - 2] << 16;
+      }
+      cpu.cycles += pc22Bits ? 4 : 3;
+    case 69:
+      /* RETI, 1001 0101 0001 1000 */
+      final bool pc22Bits = cpu.pc22Bits;
+      final int i =
+          cpu.dataView.getUint16(93, Endian.little) + (pc22Bits ? 3 : 2);
+      cpu.dataView.setUint16(93, i, Endian.little);
+      cpu.pc = (cpu.data[i - 1] << 8) + cpu.data[i] - 1;
+      if (pc22Bits) {
+        cpu.pc |= cpu.data[i - 2] << 16;
+      }
+      cpu.cycles += pc22Bits ? 4 : 3;
+      cpu.data[95] |= 0x80; // Enable interrupts
+    case 70:
+      /* RJMP, 1100 kkkk kkkk kkkk */
+      cpu.pc =
+          cpu.pc + ((opcode & 0x7ff) - ((opcode & 0x800) != 0 ? 0x800 : 0));
+      cpu.cycles++;
+    case 71:
+      /* ROR, 1001 010d dddd 0111 */
+      final int d = cpu.data[(opcode & 0x1f0) >> 4];
+      final int r = (d >>> 1) | ((cpu.data[95] & 1) << 7);
+      cpu.data[(opcode & 0x1f0) >> 4] = r;
+      int sreg = cpu.data[95] & 0xe0;
+      sreg |= ((r) != 0) ? 0 : 2;
+      sreg |= ((128 & r) != 0) ? 4 : 0;
+      sreg |= ((1 & d) != 0) ? 1 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ (sreg & 1)) != 0 ? 8 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
+      cpu.data[95] = sreg;
+    case 72:
+      /* SBC, 0000 10rd dddd rrrr */
+      final int val1 = cpu.data[(opcode & 0x1f0) >> 4];
+      final int val2 = cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
+      int sreg = cpu.data[95];
+      final int R = val1 - val2 - (sreg & 1);
+      cpu.data[(opcode & 0x1f0) >> 4] = R;
+      sreg = (sreg & 0xc0) |
+          (R == 0 && ((sreg >> 1) & 1) != 0 ? 2 : 0) |
+          (val2 + (sreg & 1) > val1 ? 1 : 0);
+      sreg |= ((128 & R) != 0) ? 4 : 0;
+      sreg |= (((val1 ^ val2) & (val1 ^ R) & 128) != 0) ? 8 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
+      sreg |=
+          ((1 & ((~val1 & val2) | (val2 & R) | (R & ~val1))) != 0) ? 0x20 : 0;
+      cpu.data[95] = sreg;
+    case 73:
+      /* SBCI, 0100 KKKK dddd KKKK */
+      final int val1 = cpu.data[((opcode & 0xf0) >> 4) + 16];
+      final int val2 = (opcode & 0xf) | ((opcode & 0xf00) >> 4);
+      int sreg = cpu.data[95];
+      final int R = val1 - val2 - (sreg & 1);
+      cpu.data[((opcode & 0xf0) >> 4) + 16] = R;
+      sreg = (sreg & 0xc0) |
+          (R == 0 && ((sreg >> 1) & 1) != 0 ? 2 : 0) |
+          (val2 + (sreg & 1) > val1 ? 1 : 0);
+      sreg |= ((128 & R) != 0) ? 4 : 0;
+      sreg |= (((val1 ^ val2) & (val1 ^ R) & 128) != 0) ? 8 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
+      sreg |=
+          ((1 & ((~val1 & val2) | (val2 & R) | (R & ~val1))) != 0) ? 0x20 : 0;
+      cpu.data[95] = sreg;
+    case 74:
+      /* SBI, 1001 1010 AAAA Abbb */
+      final int target = ((opcode & 0xf8) >> 3) + 32;
+      final int mask = 1 << (opcode & 7);
+      cpu.writeData(target, cpu.readData(target) | mask, mask);
+      cpu.cycles++;
+    case 75:
+      /* SBIC, 1001 1001 AAAA Abbb */
+      final int value = cpu.readData(((opcode & 0xf8) >> 3) + 32);
+      if ((value & (1 << (opcode & 7))) == 0) {
+        final int nextOpcode = cpu.progMem[cpu.pc + 1];
+        final int skipSize = isTwoWordInstruction(nextOpcode) ? 2 : 1;
+        cpu.cycles += skipSize;
+        cpu.pc += skipSize;
+      }
+    case 76:
+      /* SBIS, 1001 1011 AAAA Abbb */
+      final int value = cpu.readData(((opcode & 0xf8) >> 3) + 32);
+      if ((value & (1 << (opcode & 7))) != 0) {
+        final int nextOpcode = cpu.progMem[cpu.pc + 1];
+        final int skipSize = isTwoWordInstruction(nextOpcode) ? 2 : 1;
+        cpu.cycles += skipSize;
+        cpu.pc += skipSize;
+      }
+    case 77:
+      /* SBIW, 1001 0111 KKdd KKKK */
+      final int i = 2 * ((opcode & 0x30) >> 4) + 24;
+      final int a = cpu.dataView.getUint16(i, Endian.little);
+      final int l = (opcode & 0xf) | ((opcode & 0xc0) >> 2);
+      final int R = a - l;
+      cpu.dataView.setUint16(i, R, Endian.little);
+      int sreg = cpu.data[95] & 0xc0;
+      sreg |= ((R) != 0) ? 0 : 2;
+      sreg |= ((0x8000 & R) != 0) ? 4 : 0;
+      sreg |= ((a & ~R & 0x8000) != 0) ? 8 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
+      sreg |= (l > a) ? 1 : 0;
+      sreg |= ((1 & ((~a & l) | (l & R) | (R & ~a))) != 0) ? 0x20 : 0;
+      cpu.data[95] = sreg;
+      cpu.cycles++;
+    case 78:
+      /* SBRC, 1111 110r rrrr 0bbb */
+      if ((cpu.data[(opcode & 0x1f0) >> 4] & (1 << (opcode & 7))) == 0) {
+        final int nextOpcode = cpu.progMem[cpu.pc + 1];
+        final int skipSize = isTwoWordInstruction(nextOpcode) ? 2 : 1;
+        cpu.cycles += skipSize;
+        cpu.pc += skipSize;
+      }
+    case 79:
+      /* SBRS, 1111 111r rrrr 0bbb */
+      if ((cpu.data[(opcode & 0x1f0) >> 4] & (1 << (opcode & 7))) != 0) {
+        final int nextOpcode = cpu.progMem[cpu.pc + 1];
+        final int skipSize = isTwoWordInstruction(nextOpcode) ? 2 : 1;
+        cpu.cycles += skipSize;
+        cpu.pc += skipSize;
+      }
+    case 80:
     /* SLEEP, 1001 0101 1000 1000 */
     /* not implemented */
-  } else if (opcode == 0x95e8) {
+    case 81:
     /* SPM, 1001 0101 1110 1000 */
     /* not implemented */
-  } else if (opcode == 0x95f8) {
+    case 82:
     /* SPM(INC), 1001 0101 1111 1000 */
     /* not implemented */
-  } else if ((opcode & 0xfe0f) == 0x9200) {
-    /* STS, 1001 001d dddd 0000 kkkk kkkk kkkk kkkk */
-    final int value = cpu.data[(opcode & 0x1f0) >> 4];
-    final int addr = cpu.progMem[cpu.pc + 1];
-    cpu.writeData(addr, value);
-    cpu.pc++;
-    cpu.cycles++;
-  } else if ((opcode & 0xfe0f) == 0x920c) {
-    /* STX, 1001 001r rrrr 1100 */
-    cpu.writeData(cpu.dataView.getUint16(26, Endian.little),
-        cpu.data[(opcode & 0x1f0) >> 4]);
-    cpu.cycles++;
-  } else if ((opcode & 0xfe0f) == 0x920d) {
-    /* STX(INC), 1001 001r rrrr 1101 */
-    final int x = cpu.dataView.getUint16(26, Endian.little);
-    cpu.writeData(x, cpu.data[(opcode & 0x1f0) >> 4]);
-    cpu.dataView.setUint16(26, x + 1, Endian.little);
-    cpu.cycles++;
-  } else if ((opcode & 0xfe0f) == 0x920e) {
-    /* STX(DEC), 1001 001r rrrr 1110 */
-    final int i = cpu.data[(opcode & 0x1f0) >> 4];
-    final int x = cpu.dataView.getUint16(26, Endian.little) - 1;
-    cpu.dataView.setUint16(26, x, Endian.little);
-    cpu.writeData(x, i);
-    cpu.cycles++;
-  } else if ((opcode & 0xfe0f) == 0x8208) {
-    /* STY, 1000 001r rrrr 1000 */
-    cpu.writeData(cpu.dataView.getUint16(28, Endian.little),
-        cpu.data[(opcode & 0x1f0) >> 4]);
-    cpu.cycles++;
-  } else if ((opcode & 0xfe0f) == 0x9209) {
-    /* STY(INC), 1001 001r rrrr 1001 */
-    final int i = cpu.data[(opcode & 0x1f0) >> 4];
-    final int y = cpu.dataView.getUint16(28, Endian.little);
-    cpu.writeData(y, i);
-    cpu.dataView.setUint16(28, y + 1, Endian.little);
-    cpu.cycles++;
-  } else if ((opcode & 0xfe0f) == 0x920a) {
-    /* STY(DEC), 1001 001r rrrr 1010 */
-    final int i = cpu.data[(opcode & 0x1f0) >> 4];
-    final int y = cpu.dataView.getUint16(28, Endian.little) - 1;
-    cpu.dataView.setUint16(28, y, Endian.little);
-    cpu.writeData(y, i);
-    cpu.cycles++;
-  } else if ((opcode & 0xd208) == 0x8208 &&
-      ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)) !=
-          0) {
-    /* STDY, 10q0 qq1r rrrr 1qqq */
-    cpu.writeData(
-      cpu.dataView.getUint16(28, Endian.little) +
-          ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)),
-      cpu.data[(opcode & 0x1f0) >> 4],
-    );
-    cpu.cycles++;
-  } else if ((opcode & 0xfe0f) == 0x8200) {
-    /* STZ, 1000 001r rrrr 0000 */
-    cpu.writeData(cpu.dataView.getUint16(30, Endian.little),
-        cpu.data[(opcode & 0x1f0) >> 4]);
-    cpu.cycles++;
-  } else if ((opcode & 0xfe0f) == 0x9201) {
-    /* STZ(INC), 1001 001r rrrr 0001 */
-    final int z = cpu.dataView.getUint16(30, Endian.little);
-    cpu.writeData(z, cpu.data[(opcode & 0x1f0) >> 4]);
-    cpu.dataView.setUint16(30, z + 1, Endian.little);
-    cpu.cycles++;
-  } else if ((opcode & 0xfe0f) == 0x9202) {
-    /* STZ(DEC), 1001 001r rrrr 0010 */
-    final int i = cpu.data[(opcode & 0x1f0) >> 4];
-    final int z = cpu.dataView.getUint16(30, Endian.little) - 1;
-    cpu.dataView.setUint16(30, z, Endian.little);
-    cpu.writeData(z, i);
-    cpu.cycles++;
-  } else if ((opcode & 0xd208) == 0x8200 &&
-      ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)) !=
-          0) {
-    /* STDZ, 10q0 qq1r rrrr 0qqq */
-    cpu.writeData(
-      cpu.dataView.getUint16(30, Endian.little) +
-          ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)),
-      cpu.data[(opcode & 0x1f0) >> 4],
-    );
-    cpu.cycles++;
-  } else if ((opcode & 0xfc00) == 0x1800) {
-    /* SUB, 0001 10rd dddd rrrr */
-    final int val1 = cpu.data[(opcode & 0x1f0) >> 4];
-    final int val2 = cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
-    final int R = val1 - val2;
+    case 83:
+      /* STS, 1001 001d dddd 0000 kkkk kkkk kkkk kkkk */
+      final int value = cpu.data[(opcode & 0x1f0) >> 4];
+      final int addr = cpu.progMem[cpu.pc + 1];
+      cpu.writeData(addr, value);
+      cpu.pc++;
+      cpu.cycles++;
+    case 84:
+      /* STX, 1001 001r rrrr 1100 */
+      cpu.writeData(cpu.dataView.getUint16(26, Endian.little),
+          cpu.data[(opcode & 0x1f0) >> 4]);
+      cpu.cycles++;
+    case 85:
+      /* STX(INC), 1001 001r rrrr 1101 */
+      final int x = cpu.dataView.getUint16(26, Endian.little);
+      cpu.writeData(x, cpu.data[(opcode & 0x1f0) >> 4]);
+      cpu.dataView.setUint16(26, x + 1, Endian.little);
+      cpu.cycles++;
+    case 86:
+      /* STX(DEC), 1001 001r rrrr 1110 */
+      final int i = cpu.data[(opcode & 0x1f0) >> 4];
+      final int x = cpu.dataView.getUint16(26, Endian.little) - 1;
+      cpu.dataView.setUint16(26, x, Endian.little);
+      cpu.writeData(x, i);
+      cpu.cycles++;
+    case 87:
+      /* STY, 1000 001r rrrr 1000 */
+      cpu.writeData(cpu.dataView.getUint16(28, Endian.little),
+          cpu.data[(opcode & 0x1f0) >> 4]);
+      cpu.cycles++;
+    case 88:
+      /* STY(INC), 1001 001r rrrr 1001 */
+      final int i = cpu.data[(opcode & 0x1f0) >> 4];
+      final int y = cpu.dataView.getUint16(28, Endian.little);
+      cpu.writeData(y, i);
+      cpu.dataView.setUint16(28, y + 1, Endian.little);
+      cpu.cycles++;
+    case 89:
+      /* STY(DEC), 1001 001r rrrr 1010 */
+      final int i = cpu.data[(opcode & 0x1f0) >> 4];
+      final int y = cpu.dataView.getUint16(28, Endian.little) - 1;
+      cpu.dataView.setUint16(28, y, Endian.little);
+      cpu.writeData(y, i);
+      cpu.cycles++;
+    case 90:
+      /* STDY, 10q0 qq1r rrrr 1qqq */
+      cpu.writeData(
+        cpu.dataView.getUint16(28, Endian.little) +
+            ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)),
+        cpu.data[(opcode & 0x1f0) >> 4],
+      );
+      cpu.cycles++;
+    case 91:
+      /* STZ, 1000 001r rrrr 0000 */
+      cpu.writeData(cpu.dataView.getUint16(30, Endian.little),
+          cpu.data[(opcode & 0x1f0) >> 4]);
+      cpu.cycles++;
+    case 92:
+      /* STZ(INC), 1001 001r rrrr 0001 */
+      final int z = cpu.dataView.getUint16(30, Endian.little);
+      cpu.writeData(z, cpu.data[(opcode & 0x1f0) >> 4]);
+      cpu.dataView.setUint16(30, z + 1, Endian.little);
+      cpu.cycles++;
+    case 93:
+      /* STZ(DEC), 1001 001r rrrr 0010 */
+      final int i = cpu.data[(opcode & 0x1f0) >> 4];
+      final int z = cpu.dataView.getUint16(30, Endian.little) - 1;
+      cpu.dataView.setUint16(30, z, Endian.little);
+      cpu.writeData(z, i);
+      cpu.cycles++;
+    case 94:
+      /* STDZ, 10q0 qq1r rrrr 0qqq */
+      cpu.writeData(
+        cpu.dataView.getUint16(30, Endian.little) +
+            ((opcode & 7) | ((opcode & 0xc00) >> 7) | ((opcode & 0x2000) >> 8)),
+        cpu.data[(opcode & 0x1f0) >> 4],
+      );
+      cpu.cycles++;
+    case 95:
+      /* SUB, 0001 10rd dddd rrrr */
+      final int val1 = cpu.data[(opcode & 0x1f0) >> 4];
+      final int val2 = cpu.data[(opcode & 0xf) | ((opcode & 0x200) >> 5)];
+      final int R = val1 - val2;
 
-    cpu.data[(opcode & 0x1f0) >> 4] = R;
-    int sreg = cpu.data[95] & 0xc0;
-    sreg |= ((R) != 0) ? 0 : 2;
-    sreg |= ((128 & R) != 0) ? 4 : 0;
-    sreg |= (((val1 ^ val2) & (val1 ^ R) & 128) != 0) ? 8 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= (val2 > val1) ? 1 : 0;
-    sreg |= ((1 & ((~val1 & val2) | (val2 & R) | (R & ~val1))) != 0) ? 0x20 : 0;
-    cpu.data[95] = sreg;
-  } else if ((opcode & 0xf000) == 0x5000) {
-    /* SUBI, 0101 KKKK dddd KKKK */
-    final int val1 = cpu.data[((opcode & 0xf0) >> 4) + 16];
-    final int val2 = (opcode & 0xf) | ((opcode & 0xf00) >> 4);
-    final int R = val1 - val2;
-    cpu.data[((opcode & 0xf0) >> 4) + 16] = R;
-    int sreg = cpu.data[95] & 0xc0;
-    sreg |= ((R) != 0) ? 0 : 2;
-    sreg |= ((128 & R) != 0) ? 4 : 0;
-    sreg |= (((val1 ^ val2) & (val1 ^ R) & 128) != 0) ? 8 : 0;
-    sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
-    sreg |= (val2 > val1) ? 1 : 0;
-    sreg |= ((1 & ((~val1 & val2) | (val2 & R) | (R & ~val1))) != 0) ? 0x20 : 0;
-    cpu.data[95] = sreg;
-  } else if ((opcode & 0xfe0f) == 0x9402) {
-    /* SWAP, 1001 010d dddd 0010 */
-    final int d = (opcode & 0x1f0) >> 4;
-    final int i = cpu.data[d];
-    cpu.data[d] = ((15 & i) << 4) | ((240 & i) >>> 4);
-  } else if (opcode == 0x95a8) {
-    /* WDR, 1001 0101 1010 1000 */
-    cpu.onWatchdogReset();
-  } else if ((opcode & 0xfe0f) == 0x9204) {
-    /* XCH, 1001 001r rrrr 0100 */
-    final int r = (opcode & 0x1f0) >> 4;
-    final int val1 = cpu.data[r];
-    final int val2 = cpu.data[cpu.dataView.getUint16(30, Endian.little)];
-    cpu.data[cpu.dataView.getUint16(30, Endian.little)] = val1;
-    cpu.data[r] = val2;
+      cpu.data[(opcode & 0x1f0) >> 4] = R;
+      int sreg = cpu.data[95] & 0xc0;
+      sreg |= ((R) != 0) ? 0 : 2;
+      sreg |= ((128 & R) != 0) ? 4 : 0;
+      sreg |= (((val1 ^ val2) & (val1 ^ R) & 128) != 0) ? 8 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
+      sreg |= (val2 > val1) ? 1 : 0;
+      sreg |=
+          ((1 & ((~val1 & val2) | (val2 & R) | (R & ~val1))) != 0) ? 0x20 : 0;
+      cpu.data[95] = sreg;
+    case 96:
+      /* SUBI, 0101 KKKK dddd KKKK */
+      final int val1 = cpu.data[((opcode & 0xf0) >> 4) + 16];
+      final int val2 = (opcode & 0xf) | ((opcode & 0xf00) >> 4);
+      final int R = val1 - val2;
+      cpu.data[((opcode & 0xf0) >> 4) + 16] = R;
+      int sreg = cpu.data[95] & 0xc0;
+      sreg |= ((R) != 0) ? 0 : 2;
+      sreg |= ((128 & R) != 0) ? 4 : 0;
+      sreg |= (((val1 ^ val2) & (val1 ^ R) & 128) != 0) ? 8 : 0;
+      sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
+      sreg |= (val2 > val1) ? 1 : 0;
+      sreg |=
+          ((1 & ((~val1 & val2) | (val2 & R) | (R & ~val1))) != 0) ? 0x20 : 0;
+      cpu.data[95] = sreg;
+    case 97:
+      /* SWAP, 1001 010d dddd 0010 */
+      final int d = (opcode & 0x1f0) >> 4;
+      final int i = cpu.data[d];
+      cpu.data[d] = ((15 & i) << 4) | ((240 & i) >>> 4);
+    case 98:
+      /* WDR, 1001 0101 1010 1000 */
+      cpu.onWatchdogReset();
+    case 99:
+      /* XCH, 1001 001r rrrr 0100 */
+      final int r = (opcode & 0x1f0) >> 4;
+      final int val1 = cpu.data[r];
+      final int val2 = cpu.data[cpu.dataView.getUint16(30, Endian.little)];
+      cpu.data[cpu.dataView.getUint16(30, Endian.little)] = val1;
+      cpu.data[r] = val2;
   }
 
-  cpu.pc = (cpu.pc + 1) % cpu.progMem.length;
+  // `% length` only when out of range: the same result for every value, but
+  // the common case skips the modulo, which dart2js compiles to a call.
+  final int next = cpu.pc + 1;
+  final int length = cpu.progMem.length;
+  cpu.pc = next >= 0 && next < length ? next : next % length;
   cpu.cycles++;
 }
