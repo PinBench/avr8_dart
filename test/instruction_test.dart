@@ -217,7 +217,9 @@ void main() {
       expect(cpu.data[0x2c], equals(0xDF));
     });
 
-    test('should execute `CP r28, r16` and leave V clear when nothing overflows', () {
+    test(
+        'should execute `CP r28, r16` and leave V clear when nothing overflows',
+        () {
       // 0x23 - 0x27: negative and borrowing, but no signed overflow. V used to
       // be set on every CP (a bool compared with 0), so S came out wrong and
       // every signed branch after a CP went the other way — which is how
@@ -231,7 +233,8 @@ void main() {
       expect(cpu.cycles, equals(1));
       // H is left out: it is not what this pins, and this port derives it from
       // a different bit than the hardware does.
-      expect(cpu.data[SREG] & ~SREG_H, equals(SREG_I | SREG_S | SREG_N | SREG_C));
+      expect(
+          cpu.data[SREG] & ~SREG_H, equals(SREG_I | SREG_S | SREG_N | SREG_C));
     });
 
     test('should execute `CP r28, r16` and set V on signed overflow', () {
