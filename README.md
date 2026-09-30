@@ -1,7 +1,7 @@
 # avr8_dart
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
-[![Coverage: 100%](https://img.shields.io/badge/Coverage-100%25-brightgreen.svg)](https://github.com/burhankhanzada/avr8_dart)
+[![Coverage: 100%](https://img.shields.io/badge/Coverage-100%25-brightgreen.svg)](https://github.com/PinBench/avr8_dart)
 [![Dart SDK](https://img.shields.io/badge/Dart-%3E%3D3.0.0-0175C2.svg?logo=dart)](https://dart.dev)
 [![Pub Version](https://img.shields.io/pub/v/avr8_dart)](https://pub.dev/packages/avr8_dart)
 
