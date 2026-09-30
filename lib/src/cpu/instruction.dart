@@ -307,7 +307,7 @@ void avrInstruction(CPU cpu) {
       int sreg = cpu.data[95] & 0xc0;
       sreg |= ((R) != 0) ? 0 : 2;
       sreg |= ((128 & R) != 0) ? 4 : 0;
-      sreg |= (0 != ((val1 ^ val2) & (val1 ^ R) & 128)) != 0 ? 8 : 0;
+      sreg |= ((val1 ^ val2) & (val1 ^ R) & 128) != 0 ? 8 : 0;
       sreg |= (((sreg >> 2) & 1) ^ ((sreg >> 3) & 1)) != 0 ? 0x10 : 0;
       sreg |= (val2 > val1) ? 1 : 0;
       sreg |=

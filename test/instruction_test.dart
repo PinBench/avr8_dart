@@ -24,6 +24,7 @@ const r23 = 23;
 const r24 = 24;
 const r26 = 26;
 const r27 = 27;
+const r28 = 28;
 const r31 = 31;
 const X = 26;
 const Y = 28;
@@ -214,6 +215,32 @@ void main() {
       expect(cpu.pc, equals(1));
       expect(cpu.cycles, equals(1));
       expect(cpu.data[0x2c], equals(0xDF));
+    });
+
+    test('should execute `CP r28, r16` and leave V clear when nothing overflows', () {
+      // 0x23 - 0x27: negative and borrowing, but no signed overflow. V used to
+      // be set on every CP (a bool compared with 0), so S came out wrong and
+      // every signed branch after a CP went the other way — which is how
+      // avr-libc's isinf() said "inf" for 1.5 and Serial.print(1.5) printed it.
+      loadProgram(['CP r28, r16']);
+      cpu.data[r28] = 0x23;
+      cpu.data[r16] = 0x27;
+      cpu.data[SREG] = SREG_I;
+      avrInstruction(cpu);
+      expect(cpu.pc, equals(1));
+      expect(cpu.cycles, equals(1));
+      // H is left out: it is not what this pins, and this port derives it from
+      // a different bit than the hardware does.
+      expect(cpu.data[SREG] & ~SREG_H, equals(SREG_I | SREG_S | SREG_N | SREG_C));
+    });
+
+    test('should execute `CP r28, r16` and set V on signed overflow', () {
+      // 0x80 - 0x01 = 0x7F: -128 - 1 overflows.
+      loadProgram(['CP r28, r16']);
+      cpu.data[r28] = 0x80;
+      cpu.data[r16] = 0x01;
+      avrInstruction(cpu);
+      expect(cpu.data[SREG] & ~SREG_H, equals(SREG_V | SREG_S));
     });
 
     test('should execute `CPC r27, r18` instruction', () {
