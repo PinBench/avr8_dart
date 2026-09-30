@@ -2,6 +2,32 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.2.0] - Unreleased
+
+### Performance
+
+About 2.4x faster on the Dart VM / AOT and 1.3x faster compiled by dart2js
+(five Arduino Uno sketches, 3 simulated seconds each: 2.89x -> 6.82x and
+3.57x -> 4.65x real time). The emulator's state after every run is
+bit-identical to 0.1.0's.
+
+* **cpu:** decode each opcode once, into a 64K table, and `switch` on it,
+  instead of re-testing up to 99 masks on every instruction. The table is
+  built from the same tests in the same order, so every opcode runs the case
+  it always did.
+* **cpu:** `data`, `data16`, `dataView`, `progBytes` and `pc22Bits` are plain
+  `final` fields, not `late final`, which paid an initialisation check on
+  every memory access.
+* **cpu:** memory hooks are looked up by list index instead of a hash map.
+* **cpu:** the program counter skips its modulo unless it actually wraps.
+
+### Breaking changes
+
+* `CPU.readHooks` and `CPU.writeHooks` are now `CPUHookTable`s rather than
+  `Map<int, ...>`s. `hooks[addr]`, `hooks[addr] = hook`, `containsKey` and
+  `remove` work as before; other `Map` methods are gone, and an address must
+  lie inside the data space.
+
 ## [0.1.0] - 2026-06-16
 
 ### Features

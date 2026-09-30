@@ -3,7 +3,7 @@ library avr8_dart;
 
 export 'src/types.dart';
 export 'src/cpu/cpu.dart';
-export 'src/cpu/instruction.dart';
+export 'src/cpu/instruction.dart' hide avrDecodeTable;
 export 'src/cpu/interrupt.dart';
 export 'src/peripherals/clock.dart';
 export 'src/peripherals/gpio.dart';

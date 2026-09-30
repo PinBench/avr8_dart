@@ -4,6 +4,7 @@
 import 'dart:typed_data';
 import '../types.dart';
 import '../peripherals/gpio.dart';
+import 'instruction.dart' show avrDecodeTable;
 import 'interrupt.dart';
 
 const int registerSpace = 0x100;
@@ -47,21 +48,57 @@ class AVRClockEventEntry {
   });
 }
 
-class CPU {
-  late final Uint8List data;
-  late final Uint16List data16;
-  late final ByteData dataView;
-  late final Uint8List progBytes;
+/// The CPU's memory hooks, one slot per data-space address.
+///
+/// Indexed like the `Map<int, hook>` it replaced, but backed by a list: every
+/// load and store the CPU executes looks up its address here, and a list
+/// index is far cheaper than a hash lookup.
+class CPUHookTable<T extends Function> {
+  CPUHookTable(int size) : _hooks = List<T?>.filled(size, null);
 
-  final Map<int, CPUMemoryReadHook> readHooks = {};
-  final Map<int, CPUMemoryHook> writeHooks = {};
+  final List<T?> _hooks;
+
+  /// The hook for [addr], or null if there is none.
+  T? operator [](int addr) =>
+      addr >= 0 && addr < _hooks.length ? _hooks[addr] : null;
+
+  /// Sets the hook for [addr], which must be inside the data space.
+  void operator []=(int addr, T hook) => _hooks[addr] = hook;
+
+  bool containsKey(int addr) => this[addr] != null;
+
+  /// Removes and returns the hook for [addr], if any.
+  T? remove(int addr) {
+    final hook = this[addr];
+    if (hook != null) {
+      _hooks[addr] = null;
+    }
+    return hook;
+  }
+}
+
+class CPU {
+  // Plain `final`, not `late final`: these are read by nearly every
+  // instruction, and a `late` field pays an initialisation check per read.
+  final Uint8List data;
+  final Uint16List data16;
+  final ByteData dataView;
+  final Uint8List progBytes;
+
+  /// [avrDecodeTable], held per CPU: a top-level `final` is initialised
+  /// lazily, so reading it pays an initialisation check, where reading an
+  /// instance field does not. `avrInstruction` reads it on every instruction.
+  final Uint8List decodeTable = avrDecodeTable;
+
+  final CPUHookTable<CPUMemoryReadHook> readHooks;
+  final CPUHookTable<CPUMemoryHook> writeHooks;
 
   final List<AVRInterruptConfig?> pendingInterrupts =
       List.filled(MAX_INTERRUPTS, null);
   AVRClockEventEntry? nextClockEvent;
   final List<AVRClockEventEntry> clockEventPool = [];
 
-  late final bool pc22Bits;
+  final bool pc22Bits;
   final Set<AVRIOPort> gpioPorts = {};
   final List<AVRIOPort?> gpioByPort =
       List.filled(registerSpace, null, growable: true);
@@ -76,12 +113,16 @@ class CPU {
   final Uint16List progMem;
   final int sramBytes;
 
-  CPU(this.progMem, {this.sramBytes = 8192}) {
-    data = Uint8List(sramBytes + registerSpace);
-    data16 = Uint16List.view(data.buffer);
-    dataView = ByteData.view(data.buffer);
-    progBytes = Uint8List.view(progMem.buffer);
-    pc22Bits = progBytes.length > 0x20000;
+  CPU(Uint16List progMem, {int sramBytes = 8192})
+      : this._(progMem, sramBytes, Uint8List(sramBytes + registerSpace));
+
+  CPU._(this.progMem, this.sramBytes, this.data)
+      : data16 = Uint16List.view(data.buffer),
+        dataView = ByteData.view(data.buffer),
+        progBytes = Uint8List.view(progMem.buffer),
+        pc22Bits = Uint8List.view(progMem.buffer).length > 0x20000,
+        readHooks = CPUHookTable(data.length),
+        writeHooks = CPUHookTable(data.length) {
     reset();
   }
 
@@ -94,8 +135,11 @@ class CPU {
   }
 
   int readData(int addr) {
-    if (addr >= 32 && readHooks.containsKey(addr)) {
-      return readHooks[addr]!(addr);
+    if (addr >= 32) {
+      final hook = readHooks[addr];
+      if (hook != null) {
+        return hook(addr);
+      }
     }
     return data[addr];
   }
