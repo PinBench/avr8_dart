@@ -893,8 +893,11 @@ void main() {
         final runner = TestProgramRunner(cpu);
         runner.runInstructions(asm.instructionCount);
 
-        // Assert that the pin override mask remains 0 (thus it's disconnected)
-        expect(portD.overrideMask & (1 << 6), equals(0));
+        // OC0A stays disconnected: the timer never takes the pin over. In
+        // overrideMask a set bit is a pin the timer does not drive (it starts
+        // at 0xff), so the bit stays set. avr8js asserted that
+        // timerOverridePin was never called.
+        expect(portD.overrideMask & (1 << 6), equals(1 << 6));
       });
 
       test(

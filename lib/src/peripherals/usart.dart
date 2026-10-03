@@ -1,6 +1,5 @@
 import '../cpu/cpu.dart';
 
-
 class USARTConfig {
   final int rxCompleteInterrupt;
   final int dataRegisterEmptyInterrupt;
